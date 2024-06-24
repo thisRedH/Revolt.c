@@ -3,9 +3,9 @@
 
 #include <pthread.h>
 #include <pstdint/pstdint.h>
-#include "common.h"
-#include "http.h"
-#include "websocket.h"
+#include "revolt/common.h"
+#include "revolt/http.h"
+#include "revolt/websocket.h"
 
 #ifdef __cplusplus
 extern "C" {

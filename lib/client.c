@@ -21,7 +21,7 @@ Revolt *revolt_init(
     client->http = revolt_http_init(
         api_url,
         token,
-        is_bot ? "X-Bot-Token" : "X-Session-Token",
+        is_bot,
         revolt_true /* TODO: make aviable to lib user */
     );
 

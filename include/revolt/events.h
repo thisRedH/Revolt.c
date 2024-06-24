@@ -1,9 +1,9 @@
 #ifndef _REVOLTC_EVENTS_H_INCLUDED_
 #define _REVOLTC_EVENTS_H_INCLUDED_
 
-#include "common.h"
-#include "client.h"
-#include "data_models/models.h"
+#include "revolt/common.h"
+#include "revolt/client.h"
+#include "revolt/data_models/models.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,7 +41,7 @@ typedef struct RevoltPongEvent {
 typedef struct RevoltReadyEvent {
     RevoltUser *users;
     RevoltServer *servers;
-    RevoltChannel *channels;
+    void *channels; /*TODO*/
     RevoltEmoji *emoji;
 } RevoltReadyEvent;
 
@@ -72,7 +72,7 @@ RVLTC_EXPORT RVLTC_UNIMPLEMENTED void revolt_set_on_message_react(Revolt *client
 RVLTC_EXPORT RVLTC_UNIMPLEMENTED void revolt_set_on_message_unreact(Revolt *client, void(*callback)(Revolt *client, const RevoltRawEvent *event));
 RVLTC_EXPORT RVLTC_UNIMPLEMENTED void revolt_set_on_message_remove_reaction(Revolt *client, void(*callback)(Revolt *client, const RevoltRawEvent *event));
 
-RVLTC_EXPORT RVLTC_UNIMPLEMENTED void revolt_set_on_channel_create(Revolt *client, void(*callback)(Revolt *client, const RevoltChannel *channel));
+RVLTC_EXPORT RVLTC_UNIMPLEMENTED void revolt_set_on_channel_create(Revolt *client, void(*callback)(Revolt *client, const RevoltRawEvent *channel));
 RVLTC_EXPORT RVLTC_UNIMPLEMENTED void revolt_set_on_channel_update(Revolt *client, void(*callback)(Revolt *client, const RevoltRawEvent *event));
 RVLTC_EXPORT RVLTC_UNIMPLEMENTED void revolt_set_on_channel_delete(Revolt *client, void(*callback)(Revolt *client, const RevoltRawEvent *event));
 RVLTC_EXPORT RVLTC_UNIMPLEMENTED void revolt_set_on_channel_group_join(Revolt *client, void(*callback)(Revolt *client, const RevoltRawEvent *event));

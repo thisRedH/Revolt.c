@@ -1,7 +1,7 @@
 #ifndef _REVOLTC_DATA_MODELS_MESSAGE_H_INCLUDED_
 #define _REVOLTC_DATA_MODELS_MESSAGE_H_INCLUDED_
 
-#include "common.h"
+#include "revolt/common.h"
 
 #ifdef __cplusplus
 extern "C" {

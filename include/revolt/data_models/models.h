@@ -1,7 +1,7 @@
 #ifndef _REVOLTC_DATA_MODELS_MODELS_H_INCLUDED_
 #define _REVOLTC_DATA_MODELS_MODELS_H_INCLUDED_
 
-#include "common.h"
+#include "revolt/common.h"
 #include "server.h"
 #include "channel.h"
 #include "user.h"

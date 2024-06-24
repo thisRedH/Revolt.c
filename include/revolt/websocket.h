@@ -1,7 +1,7 @@
 #ifndef _REVOLTC_WEBSOCKET_H_INCLUDED_
 #define _REVOLTC_WEBSOCKET_H_INCLUDED_
 
-#include "common.h"
+#include "revolt/common.h"
 
 #define REVOLT_DEFAULT_WS_URL "wss://ws.revolt.chat/"
 

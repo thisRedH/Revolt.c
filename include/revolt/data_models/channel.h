@@ -1,7 +1,7 @@
 #ifndef _REVOLTC_DATA_MODELS__H_INCLUDED_
 #define _REVOLTC_DATA_MODELS__H_INCLUDED_
 
-#include "common.h"
+#include "revolt/common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,7 +12,7 @@ struct RevoltChannelRecipients {
     size_t count;
 };
 
-struct RevoltChannelGroupIcon {/* TODO (maybe like RevoltServerIcon) */};
+struct RevoltChannelGroupIcon {int todo;/* TODO (maybe like RevoltServerIcon) */};
 
 struct RevoltPermissionOverrideField {
     int64_t allowed_bitflag;

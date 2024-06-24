@@ -1,7 +1,7 @@
 #ifndef _REVOLTC_DATA_MODELS_USER_H_INCLUDED_
 #define _REVOLTC_DATA_MODELS_USER_H_INCLUDED_
 
-#include "common.h"
+#include "revolt/common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,7 +13,7 @@ enum RevoltUserPresence {
     REVOLT_USER_FOCUS,
     REVOLT_USER_BUSY,
     REVOLT_USER_INVISIBLE,
-    REVOLT_USER_PRESENCE_MAX,
+    REVOLT_USER_PRESENCE_MAX
 };
 
 struct RevoltUserStatus {
@@ -21,21 +21,23 @@ struct RevoltUserStatus {
     enum RevoltUserPresence presence;
 };
 
-struct RevoltUserAvetar {
+struct RevoltUserAvatar {
+    int todo;
     /*TODO*/
 };
 
 struct RevoltUserRelation {
+    int todo;
     /*TODO*/
 };
 
 typedef struct RevoltUser {
     const char *id;
-    const char username[32];
+    const char username[33];
     const char *author_id;
     const char *discriminator;
     const char *display_name;
-    struct RevoltUserAvetar avatar;
+    struct RevoltUserAvatar avatar;
     struct RevoltUserRelation relations;
     uint32_t badges;
     uint32_t flags;

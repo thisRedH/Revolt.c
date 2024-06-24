@@ -1,5 +1,10 @@
 #include "revolt/http.h"
 
+/* can be set at lib compile time (if needed) */
+#ifndef RVLTC_USERAGENT
+#define RVLTC_USERAGENT "Revolt.c/0.1.0"
+#endif
+
 size_t write_callback(void *contents, size_t size, size_t nmemb, void *userp) {
     size_t realsize = size * nmemb;
 
@@ -20,7 +25,6 @@ RevoltResponse *revolt_request_perform(CURL *hnd) {
     RevoltResponse *resp = (RevoltResponse *)calloc(1, sizeof(RevoltResponse));
     if (resp == NULL) return NULL;
 
-    curl_easy_setopt(hnd, CURLOPT_USERAGENT, "Revolt.c by thisRedH");
     curl_easy_setopt(hnd, CURLOPT_HEADERFUNCTION, write_callback);
     curl_easy_setopt(hnd, CURLOPT_HEADERDATA, (void *)&(resp->header));
     curl_easy_setopt(hnd, CURLOPT_WRITEFUNCTION, write_callback);
@@ -54,7 +58,7 @@ char *revolt_response_bytes_str(const struct RevoltResponseBytes *const data) {
 RevoltHTTP* revolt_http_init(
     const char *api_url,
     const char *token,
-    const char *auth_header,
+    revolt_bool is_bot,
     revolt_bool do_curl_glob
 ) {
     RevoltHTTP *http = (RevoltHTTP *)malloc(sizeof(RevoltHTTP));
@@ -67,7 +71,7 @@ RevoltHTTP* revolt_http_init(
     http->do_curl_glob = do_curl_glob;
     http->api_url = api_url;
     http->token = token;
-    http->auth_header = auth_header;
+    http->is_bot = is_bot;
 
     return http;
 }
@@ -82,37 +86,57 @@ void revolt_http_cleanup(RevoltHTTP *http) {
     free((void *)http);
 }
 
-RevoltResponse *revolt_http_user(RevoltHTTP *http, const char *user_id) {
-    char auth_buffer[128];
-    char url_buffer[128];
+RVLTC_INLINE char *format_header_field(const char *header, const char *value, size_t bufsize) {
+    char *buf = (char *)malloc(bufsize * sizeof(char));
+    snprintf(buf, bufsize, "%s: %s", header, value);
+    buf[bufsize -1] = '\0';
+    return buf;
+}
+
+#define RVLTC_URL_BUFS 256
+
+RevoltResponse *revolt_http_fetch(
+    RevoltHTTP *http,
+    const char *method,
+    const char *endpoint,
+    const char *body
+) {
     CURL *hnd;
+    struct curl_slist *slist = NULL;
+    char *buffer;
     RevoltResponse *resp;
-    struct curl_slist *slist;
 
     if (http == NULL) return NULL;
 
     hnd = curl_easy_init();
     if (hnd == NULL) return NULL;
 
-    slist = NULL;
+    if (http->is_bot) {
+        buffer = format_header_field("X-Bot-Token", http->token, 128);
+    } else {
+        buffer = format_header_field("X-Session-Token", http->token, 128);
+    }
 
-    snprintf(auth_buffer, sizeof(auth_buffer), "%s: %s", http->auth_header, http->token);
-    auth_buffer[sizeof(auth_buffer) - 1] = '\0';
-    slist = curl_slist_append(slist, auth_buffer);
+    slist = curl_slist_append(slist, buffer);
+    slist = curl_slist_append(slist, "Content-Type: application/json");
 
-    snprintf(url_buffer, sizeof(url_buffer), "%s/users/%s", http->api_url, user_id);
-    url_buffer[sizeof(url_buffer) - 1] = '\0';
+    free(buffer);
+    buffer = (char *)malloc(RVLTC_URL_BUFS * sizeof(char));
+    snprintf(buffer, RVLTC_URL_BUFS, "%s/%s", http->api_url, endpoint);
+    buffer[RVLTC_URL_BUFS -1] = '\0';
 
-    curl_easy_setopt(hnd, CURLOPT_CUSTOMREQUEST, "GET");
-    curl_easy_setopt(hnd, CURLOPT_URL, url_buffer);
+    curl_easy_setopt(hnd, CURLOPT_CUSTOMREQUEST, method);
+    curl_easy_setopt(hnd, CURLOPT_URL, buffer);
     curl_easy_setopt(hnd, CURLOPT_HTTPHEADER, slist);
-    curl_easy_setopt(hnd, CURLOPT_BUFFERSIZE, 512L);
+    curl_easy_setopt(hnd, CURLOPT_USERAGENT, RVLTC_USERAGENT);
+    /* curl_easy_setopt(hnd, CURLOPT_POSTFIELDS, body); */
 
     resp = revolt_request_perform(hnd);
     if (resp == NULL) return NULL;
 
     curl_slist_free_all(slist);
     curl_easy_cleanup(hnd);
+    free(buffer);
 
     return resp;
 }

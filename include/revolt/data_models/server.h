@@ -1,7 +1,7 @@
 #ifndef _REVOLTC_DATA_MODELS_SERVER_H_INCLUDED_
 #define _REVOLTC_DATA_MODELS_SERVER_H_INCLUDED_
 
-#include "common.h"
+#include "revolt/common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,7 +12,7 @@ enum RevoltSystemMessageType {
     REVOLT_SYSTEM_MESSAGE_USER_LEFT,
     REVOLT_SYSTEM_MESSAGE_USER_KICKED,
     REVOLT_SYSTEM_MESSAGE_USER_BANNED,
-    REVOLT_SYSTEM_MESSAGE_TYPE_MAX,
+    REVOLT_SYSTEM_MESSAGE_TYPE_MAX
 };
 
 struct RevoltSystemMessage {
@@ -26,9 +26,9 @@ struct RevoltServerCategory {
     const char *channel_ids;
 };
 
-struct RevoltServerRole {/* TODO */};
-struct RevoltServerIcon {/* TODO (maybe like RevoltChannelGroupIcon) */};
-struct RevoltServerBanner {/* TODO */};
+struct RevoltServerRole {int todo; /* TODO */};
+struct RevoltServerIcon {int todo; /* TODO (maybe like RevoltChannelGroupIcon) */};
+struct RevoltServerBanner {int todo; /* TODO */};
 
 typedef struct RevoltServer {
     const char *id;
