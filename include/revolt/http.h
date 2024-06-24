@@ -28,7 +28,6 @@ typedef struct RevoltResponse {
  * \return char* Has to be freed by the caller
  */
 char *revolt_response_bytes_str(const struct RevoltResponseBytes *const data);
-RevoltResponse *revolt_request_perform(CURL *hnd);
 
 typedef struct RevoltHTTP {
     revolt_bool do_curl_glob;
@@ -39,7 +38,9 @@ typedef struct RevoltHTTP {
 
 RevoltHTTP *revolt_http_init(const char *api_url, const char *token, revolt_bool is_bot, revolt_bool do_curl_glob);
 void revolt_http_cleanup(RevoltHTTP *http);
-RevoltResponse *revolt_http_fetch(RevoltHTTP *http, const char *method, const char *endpoint, const char *body);
+
+RevoltResponse *revolt_http_request(RevoltHTTP *http, const char *method, const char *path, const char *body);
+#define revolt_http_get(http, path) revolt_http_fetch((http), "GET", (path), NULL)
 
 #ifdef __cplusplus
 }

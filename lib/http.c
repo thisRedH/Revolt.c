@@ -20,7 +20,7 @@ size_t write_callback(void *contents, size_t size, size_t nmemb, void *userp) {
     return realsize;
 }
 
-RevoltResponse *revolt_request_perform(CURL *hnd) {
+RevoltResponse *request_perform(CURL *hnd) {
     CURLcode code = CURLE_OK;
     RevoltResponse *resp = (RevoltResponse *)calloc(1, sizeof(RevoltResponse));
     if (resp == NULL) return NULL;
@@ -95,10 +95,10 @@ RVLTC_INLINE char *format_header_field(const char *header, const char *value, si
 
 #define RVLTC_URL_BUFS 256
 
-RevoltResponse *revolt_http_fetch(
+RevoltResponse *revolt_http_request(
     RevoltHTTP *http,
     const char *method,
-    const char *endpoint,
+    const char *path,
     const char *body
 ) {
     CURL *hnd;
@@ -122,7 +122,7 @@ RevoltResponse *revolt_http_fetch(
 
     free(buffer);
     buffer = (char *)malloc(RVLTC_URL_BUFS * sizeof(char));
-    snprintf(buffer, RVLTC_URL_BUFS, "%s/%s", http->api_url, endpoint);
+    snprintf(buffer, RVLTC_URL_BUFS, "%s/%s", http->api_url, path);
     buffer[RVLTC_URL_BUFS -1] = '\0';
 
     curl_easy_setopt(hnd, CURLOPT_CUSTOMREQUEST, method);
@@ -131,7 +131,7 @@ RevoltResponse *revolt_http_fetch(
     curl_easy_setopt(hnd, CURLOPT_USERAGENT, RVLTC_USERAGENT);
     /* curl_easy_setopt(hnd, CURLOPT_POSTFIELDS, body); */
 
-    resp = revolt_request_perform(hnd);
+    resp = request_perform(hnd);
     if (resp == NULL) return NULL;
 
     curl_slist_free_all(slist);
