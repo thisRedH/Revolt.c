@@ -86,7 +86,7 @@ void revolt_http_cleanup(RevoltHTTP *http) {
     free((void *)http);
 }
 
-RVLTC_INLINE char *format_header_field(const char *header, const char *value, size_t bufsize) {
+char *format_header_field(const char *header, const char *value, size_t bufsize) {
     char *buf = (char *)malloc(bufsize * sizeof(char));
     snprintf(buf, bufsize, "%s: %s", header, value);
     buf[bufsize -1] = '\0';

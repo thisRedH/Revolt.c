@@ -2,10 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 
 project(Revolt.c LANGUAGES C)
 
-#option(BUILD_SATIC "Build Static lib, instead of Shared lib" ON)
-#option(BUILD_BOTH "Build Static lib, instead of Shared lib" OFF)
-set(BUILD_SATIC ON)
-message(STATUS "${PROJECT_NAME}: BUILD_SATIC ${BUILD_SATIC}")
+option(REVOLT_BUILD_SHARED "Build shared libraries." OFF)
+message(STATUS "${PROJECT_NAME}: REVOLT_BUILD_SHARED ${REVOLT_BUILD_SHARED}")
 
 # Sources
 file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_LIST_DIR}/lib/*.c)
@@ -18,15 +16,15 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/ext)
 set(CMAKE_C_FLAGS "-pedantic-errors -ansi -Wextra -Wall -Wuninitialized")
 
 # Lib
-if(BUILD_SATIC)
-    set(BULD_LIB_NAME revolt_static)
-    add_library(${BULD_LIB_NAME} STATIC ${SOURCES} ${HEADERS})
-    target_compile_definitions(${BULD_LIB_NAME} PUBLIC RVLTC_BUILD_STATIC)
-else()
+if(${REVOLT_BUILD_SHARED})
     set(BULD_LIB_NAME revolt)
     add_library(${BULD_LIB_NAME} SHARED ${SOURCES} ${HEADERS})
     target_compile_definitions(${BULD_LIB_NAME} PUBLIC RVLTC_BUILD_SHARED)
     set_property(TARGET ${BULD_LIB_NAME} PROPERTY POSITION_INDEPENDENT_CODE 1)
+else()
+    set(BULD_LIB_NAME revolt_static)
+    add_library(${BULD_LIB_NAME} STATIC ${SOURCES} ${HEADERS})
+    target_compile_definitions(${BULD_LIB_NAME} PUBLIC RVLTC_BUILD_STATIC)
 endif()
 add_library(${PROJECT_NAME}::${BULD_LIB_NAME} ALIAS ${BULD_LIB_NAME})
 

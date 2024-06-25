@@ -40,7 +40,7 @@ RevoltHTTP *revolt_http_init(const char *api_url, const char *token, revolt_bool
 void revolt_http_cleanup(RevoltHTTP *http);
 
 RevoltResponse *revolt_http_request(RevoltHTTP *http, const char *method, const char *path, const char *body);
-#define revolt_http_get(http, path) revolt_http_fetch((http), "GET", (path), NULL)
+#define revolt_http_get(http, path) revolt_http_request((http), "GET", (path), NULL)
 
 #ifdef __cplusplus
 }
