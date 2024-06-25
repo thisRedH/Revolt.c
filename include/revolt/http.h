@@ -39,8 +39,8 @@ typedef struct RevoltHTTP {
 RevoltHTTP *revolt_http_init(const char *api_url, const char *token, revolt_bool is_bot, revolt_bool do_curl_glob);
 void revolt_http_cleanup(RevoltHTTP *http);
 
-RevoltResponse *revolt_http_request(RevoltHTTP *http, const char *method, const char *path, const char *body);
-#define revolt_http_get(http, path) revolt_http_request((http), "GET", (path), NULL)
+RevoltResponse *revolt_http_request(RevoltHTTP *http, const char *method, const char *path, const char *body, size_t body_size);
+#define revolt_http_get(http, path) revolt_http_request((http), "GET", (path), NULL, 0)
 
 #ifdef __cplusplus
 }

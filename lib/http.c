@@ -99,7 +99,8 @@ RevoltResponse *revolt_http_request(
     RevoltHTTP *http,
     const char *method,
     const char *path,
-    const char *body
+    const char *body,
+    size_t body_size
 ) {
     CURL *hnd;
     struct curl_slist *slist = NULL;
@@ -129,7 +130,11 @@ RevoltResponse *revolt_http_request(
     curl_easy_setopt(hnd, CURLOPT_URL, buffer);
     curl_easy_setopt(hnd, CURLOPT_HTTPHEADER, slist);
     curl_easy_setopt(hnd, CURLOPT_USERAGENT, RVLTC_USERAGENT);
-    /* curl_easy_setopt(hnd, CURLOPT_POSTFIELDS, body); */
+
+    if (body != NULL && body_size > 0) {
+        curl_easy_setopt(hnd, CURLOPT_POSTFIELDS, body);
+        curl_easy_setopt(hnd, CURLOPT_POSTFIELDSIZE_LARGE, (curl_off_t)body_size);
+    }
 
     resp = request_perform(hnd);
     if (resp == NULL) return NULL;
