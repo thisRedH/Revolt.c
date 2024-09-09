@@ -12,13 +12,17 @@ extern "C" {
 #endif
 
 typedef struct Revolt {
-    RevoltHTTP* http;
-    RevoltWebSocket* ws;
+    RevoltHTTP *http;
+    RevoltWS *ws;
 } Revolt;
 
-RVLTC_EXPORT Revolt* revolt_bot_easy_init(const char* bot_token);
-RVLTC_EXPORT RVLTC_UNIMPLEMENTED Revolt* revolt_init(const char* token, revolt_bool is_bot, const char* api_url, const char* ws_url);
-RVLTC_EXPORT void revolt_cleanup(Revolt* client);
+RVLTC_EXPORT Revolt *revolt_init(const char* token, revolt_bool is_bot, const char* api_url, const char* ws_url);
+#define revolt_init_bot(bot_token, api_url, ws_url)     revolt_init((bot_token), revolt_true, (api_url), (ws_url))
+#define revolt_init_easy(bot_token, api_url)            revolt_init((bot_token), revolt_false, (api_url), NULL)
+#define revolt_init_easy_bot(bot_token, api_url)        revolt_init((bot_token), revolt_true, (api_url), NULL)
+
+RVLTC_EXPORT void revolt_cleanup(Revolt *client);
+
 RVLTC_EXPORT RVLTC_UNIMPLEMENTED void revolt_run(Revolt* client);
 
 #ifdef __cplusplus

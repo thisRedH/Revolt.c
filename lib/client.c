@@ -1,13 +1,5 @@
 #include "revolt/client.h"
-
-Revolt *revolt_bot_easy_init(const char *bot_token) {
-    return revolt_init(
-        bot_token,
-        revolt_true,
-        REVOLT_DEFAULT_API_URL,
-        REVOLT_DEFAULT_WS_URL
-    );
-}
+#include "websocket.h"
 
 Revolt *revolt_init(
     const char *token,
@@ -15,8 +7,9 @@ Revolt *revolt_init(
     const char *api_url,
     const char *ws_url
 ) {
-    Revolt *client = (Revolt *)malloc(sizeof(Revolt));
-    if (client == NULL) return NULL;
+    Revolt *client = malloc(sizeof(Revolt));
+    if (client == NULL)
+        return NULL;
 
     client->http = revolt_http_init(
         api_url,
@@ -24,17 +17,29 @@ Revolt *revolt_init(
         is_bot,
         revolt_true /* TODO: make aviable to lib user */
     );
+    if (client->http == NULL) {
+        revolt_cleanup(client);
+        return NULL;
+    }
 
-    client->ws = revolt_websocket_init(ws_url, token);
+    client->ws = revolt_ws_new(ws_url);
+    if (client->ws == NULL) {
+        revolt_cleanup(client);
+        return NULL;
+    }
 
     return client;
 }
 
 void revolt_cleanup(Revolt* client) {
-    if (client == NULL) return;
+    if (client == NULL)
+        return;
 
-    if (client->http != NULL) revolt_http_cleanup(client->http);
-    if (client->ws != NULL) revolt_websocket_cleanup(client->ws);
+    if (client->http != NULL)
+        revolt_http_cleanup(client->http);
+    if (client->ws != NULL)
+        revolt_ws_delete(client->ws);
+
     /* TODO: eventloop */
     /* TODO: threads */
 

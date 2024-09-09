@@ -3,22 +3,25 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 #ifdef HAVE_STDINT_H
-#include <stdint.h>
+    #include <stdint.h>
 #else
-#include <pstdint/pstdint.h>
+    #include <pstdint/pstdint.h>
 #endif
+#include "revolt/error.h"
 
 /* IEEE Std. 1003.1-1990 */
 #if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE == 1L
-#undef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 199009L
+    #undef _POSIX_C_SOURCE
+    #define _POSIX_C_SOURCE 199009L
 #endif
 
 /* IEEE Std. 1003.2-1992 */
 #if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE == 2L
-#undef _POSIX_C_SOURCE
-#define _POSIX_C_SOURCE 199209L
+    #undef _POSIX_C_SOURCE
+    #define _POSIX_C_SOURCE 199209L
 #endif
 
 /* X/Open */
@@ -47,7 +50,9 @@
     #define RVLTC_OS_UNIX 1
 #elif defined(__APPLE__) && defined(__MACH__)
     #define RVLTC_OS_APPLE 1
-    #warning "APPLE is not officially supported"
+    #if !defined(RVLTC_OS_FORCE)
+        #error "APPLE is not officially supported"
+    #endif
 #elif defined(unix) || defined(__unix__) || defined(__unix)
     #define RVLTC_OS_UNIX 1
 #else
@@ -128,6 +133,7 @@ extern "C" {
 #define RVLTC_MIN(x, y)                         ((x) < (y) ? (x) : (y))
 #define RVLTC_CLAMP(x, min, max)                RVLTC_MIN(RVLTC_MAX((x), (min)), (max))
 
+#if RVLTC_DEFINE_SLEEP == 1
 #if defined(RVLTC_OS_UNIX)
     #if _POSIX_C_SOURCE >= 199309L
         #include <time.h>
@@ -137,13 +143,16 @@ extern "C" {
             ts.tv_nsec = ((ms) % 1000) * 1000000; \
             nanosleep(&ts, NULL);               \
         }
-    #else
+    #elif defined(_BSD_SOURCE) || defined(_DEFAULT_SOURCE)
         #include <unistd.h>
         #define revolt_sleep(ms)                (void)usleep((unsigned int)((ms) * 1000))
+    #else
+        #error "Could not detect sleep implementation! Define _POSIX_C_SOURCE, _BSD_SOURCE or _DEFAULT_SOURCE before any system header in this translation unit."
     #endif
 #elif defined(RVLTC_OS_WIN)
     #include <windows.h>
     #define revolt_sleep(ms)                    Sleep((DWORD)(ms))
+#endif
 #endif
 
 typedef enum _revolt_bool {
