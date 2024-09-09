@@ -1,15 +1,15 @@
-#include "revolt/websocket.h"
+#include "revolt/core/websocket.h"
 #define CURL_NO_OLDIES
 #include <curl/curl.h>
 
-#define CNTRL_FRAME(opc) (          \
-    (opc) == REVOLT_WS_OPC_CLOSE || \
-    (opc) == REVOLT_WS_OPC_PING  || \
-    (opc) == REVOLT_WS_OPC_PONG)
+#define CNTRL_FRAME(opc) (           \
+    (opc) == REVOLTC_WS_OPC_CLOSE || \
+    (opc) == REVOLTC_WS_OPC_PING  || \
+    (opc) == REVOLTC_WS_OPC_PONG)
 
-#define ILLEGAL_PAYLOAD_LEN(opc, len)  \
-    ((len) > REVOLT_WS_PAYLOAD_MAXS || \
-    ((len) > REVOLT_WS_PAYLOAD_MAXS_CNTRL && CNTRL_FRAME(opc)))
+#define ILLEGAL_PAYLOAD_LEN(opc, len)   \
+    ((len) > REVOLTC_WS_PAYLOAD_MAXS || \
+    ((len) > REVOLTC_WS_PAYLOAD_MAXS_CNTRL && CNTRL_FRAME(opc)))
 
 /* TODO move ..._bytes_be and str_... to a util file */
 static RVLTC_INLINE void u64_to_bytes_be(uint64_t v, uint8_t bytes_out[8]) {
@@ -235,12 +235,12 @@ end:
     return (f == 7); /* 7 = 1 | 2 | 4 */
 }
 
-static RevoltErr ws_send_raw(RevoltWS *ws, long timeout_ms, revolt_byte *data, uint64_t data_len);
-static RevoltErr ws_recv_raw(RevoltWS *ws, long timeout_ms, revolt_byte *buf, uint64_t buf_size, uint64_t *nrecv);
+static RevoltErr ws_send_raw(RevoltcWS *ws, long timeout_ms, revolt_byte *data, uint64_t data_len);
+static RevoltErr ws_recv_raw(RevoltcWS *ws, long timeout_ms, revolt_byte *buf, uint64_t buf_size, uint64_t *nrecv);
 
 /* TODO generate Sec-WebSocket-Key instead of having one predefined */
 
-static RevoltErr ws_handshake_send(RevoltWS *ws) {
+static RevoltErr ws_handshake_send(RevoltcWS *ws) {
     const char *const fmt =
         "GET /%s HTTP/1.1\r\n"
         "Host: %s\r\n"
@@ -281,7 +281,7 @@ static RevoltErr ws_handshake_send(RevoltWS *ws) {
     return res;
 }
 
-static RevoltErr ws_handshake_recv(RevoltWS *ws) {
+static RevoltErr ws_handshake_recv(RevoltcWS *ws) {
     /* static const char *const response_sec_key = "B93ot2qde0NCXSyAgIkgWocnbB8="; */
     static const char *const response_sec_key = "b93ot2qde0ncxsyagikgwocnbb8=";
     RevoltErr res;
@@ -333,19 +333,19 @@ static RevoltErr ws_handshake_recv(RevoltWS *ws) {
     return res;
 }
 
-static RevoltErr ws_handshake(RevoltWS *ws) {
+static RevoltErr ws_handshake(RevoltcWS *ws) {
     RevoltErr res = ws_handshake_send(ws);
     if (res != REVOLTE_OK)
         return res;
     return ws_handshake_recv(ws);
 }
 
-RevoltWSFrame revolt_ws_frame__new(
-    enum RevoltWSOpcodes opc,
+RevoltcWSFrame revoltc_ws_frame__new(
+    enum RevoltcWSOpcodes opc,
     revolt_byte *payload,
     uint64_t payload_len
 ) {
-    RevoltWSFrame frame = {0};
+    RevoltcWSFrame frame = {0};
     frame.header.fin = 1;
     frame.header.opcode = opc;
     frame.header.masked = 1;
@@ -355,13 +355,13 @@ RevoltWSFrame revolt_ws_frame__new(
     return frame;
 }
 
-RevoltWS *revolt_ws_new(const char *url) {
-    RevoltWS *ws;
+RevoltcWS *revoltc_ws_new(const char *url) {
+    RevoltcWS *ws;
 
     if (url == NULL)
         return NULL;
 
-    ws = malloc(sizeof(RevoltWS));
+    ws = malloc(sizeof(RevoltcWS));
     if (ws == NULL)
         return NULL;
 
@@ -376,13 +376,13 @@ RevoltWS *revolt_ws_new(const char *url) {
     return ws;
 }
 
-void revolt_ws_delete(RevoltWS *ws) {
-    (void) revolt_ws_disconnect_ok(ws);
+void revoltc_ws_delete(RevoltcWS *ws) {
+    (void) revoltc_ws_disconnect_ok(ws);
     free(ws->url);
     free(ws);
 }
 
-RevoltErr revolt_ws_connect(RevoltWS *ws) {
+RevoltErr revoltc_ws_connect(RevoltcWS *ws) {
     CURLcode res;
     RevoltErr err;
 
@@ -412,9 +412,9 @@ RevoltErr revolt_ws_connect(RevoltWS *ws) {
     return REVOLTE_OK;
 }
 
-RevoltErr revolt_ws_disconnect(
-    RevoltWS *ws,
-    enum RevoltWSStatusCodes status,
+RevoltErr revoltc_ws_disconnect(
+    RevoltcWS *ws,
+    enum RevoltcWSStatusCodes status,
     revolt_byte *msg,
     size_t msg_len
 ) {
@@ -435,15 +435,15 @@ RevoltErr revolt_ws_disconnect(
     if (msg_len > 0 && msg != NULL)
         (void) memcpy(msg_bytes + 2, msg, msg_len);
 
-    res = revolt_ws_send(ws, 3000L, revolt_ws_frame__new(
-        REVOLT_WS_OPC_CLOSE,
+    res = revoltc_ws_send(ws, 3000L, revoltc_ws_frame__new(
+        REVOLTC_WS_OPC_CLOSE,
         msg_bytes,
         msg_len + 2
     ));
     if (res != REVOLTE_OK)
         goto end;
 
-    res = revolt_ws_recv(ws, 3000L, NULL, NULL);
+    res = revoltc_ws_recv(ws, 3000L, NULL, NULL);
     if (res != REVOLTE_OK)
         goto end;
 
@@ -458,14 +458,14 @@ end:
     return REVOLTE_OK;
 }
 
-void revolt_ws_mask(const revolt_byte key[4], revolt_byte *data, uint64_t len) {
+void revoltc_ws_mask(const revolt_byte key[4], revolt_byte *data, uint64_t len) {
     uint64_t i;
     for (i = 0; i < len; ++i)
         data[i] ^= key[i % 4];
 }
 
 static RevoltErr ws_send_raw(
-    RevoltWS *ws,
+    RevoltcWS *ws,
     long timeout_ms,
     revolt_byte *data,
     uint64_t data_len
@@ -500,8 +500,8 @@ static RevoltErr ws_send_raw(
     return REVOLTE_OK;
 }
 
-RevoltErr revolt_ws_send_raw(
-    RevoltWS *ws,
+RevoltErr revoltc_ws_send_raw(
+    RevoltcWS *ws,
     long timeout_ms,
     revolt_byte *data,
     uint64_t data_len
@@ -515,7 +515,7 @@ RevoltErr revolt_ws_send_raw(
     return ws_send_raw(ws, timeout_ms, data, data_len);
 }
 
-RevoltErr revolt_ws_send(RevoltWS *ws, long timeout_ms, RevoltWSFrame frame) {
+RevoltErr revoltc_ws_send(RevoltcWS *ws, long timeout_ms, RevoltcWSFrame frame) {
     RevoltErr res;
     revolt_byte *buf;
     int8_t header_len;
@@ -526,11 +526,11 @@ RevoltErr revolt_ws_send(RevoltWS *ws, long timeout_ms, RevoltWSFrame frame) {
     if (!ws->connected)
         return REVOLTE_NOT_CONNECTED;
 
-    buf = malloc(REVOLT_WS_HEADER_MAXS + frame.header.payload_len);
+    buf = malloc(REVOLTC_WS_HEADER_MAXS + frame.header.payload_len);
     if (buf == NULL)
         return REVOLTE_NOMEM;
 
-    res = revolt_ws_serialize_header(frame.header, buf, &header_len);
+    res = revoltc_ws_serialize_header(frame.header, buf, &header_len);
 
     if (res == REVOLTE_OK) {
         if (frame.header.payload_len > 0) {
@@ -540,7 +540,7 @@ RevoltErr revolt_ws_send(RevoltWS *ws, long timeout_ms, RevoltWSFrame frame) {
                 frame.header.payload_len
             );
             if (frame.header.masked) {
-                revolt_ws_mask(
+                revoltc_ws_mask(
                     buf + header_len - 4,
                     buf + header_len,
                     header_len + frame.header.payload_len
@@ -564,7 +564,7 @@ RevoltErr revolt_ws_send(RevoltWS *ws, long timeout_ms, RevoltWSFrame frame) {
  * the amount of data we are recieving in other functions */
 
 static RevoltErr ws_recv_raw(
-    RevoltWS *ws,
+    RevoltcWS *ws,
     long timeout_ms,
     revolt_byte *buf,
     uint64_t buf_size,
@@ -599,8 +599,8 @@ static RevoltErr ws_recv_raw(
     return REVOLTE_OK;
 }
 
-RevoltErr revolt_ws_recv_raw(
-    RevoltWS *ws,
+RevoltErr revoltc_ws_recv_raw(
+    RevoltcWS *ws,
     long timeout_ms,
     revolt_byte *buf,
     uint64_t buf_size,
@@ -617,17 +617,17 @@ RevoltErr revolt_ws_recv_raw(
 
 /* TODO make fn revolt_ws_recv smaller (maybe split?) */
 
-RevoltErr revolt_ws_recv(
-    RevoltWS *ws,
+RevoltErr revoltc_ws_recv(
+    RevoltcWS *ws,
     long timeout_ms,
-    RevoltWSFrame *frame,
+    RevoltcWSFrame *frame,
     uint64_t *bytes_recv
 ) {
     RevoltErr ret = REVOLTE_UNKNOWN;
-    RevoltWSHeader header = {0};
+    RevoltcWSHeader header = {0};
     revolt_byte *buf;
     size_t buf_size = 256;
-    uint64_t needed = REVOLT_WS_HEADER_MINS;
+    uint64_t needed = REVOLTC_WS_HEADER_MINS;
     uint64_t nrecv = 0;
     uint8_t header_len;
     size_t n;
@@ -661,7 +661,7 @@ RevoltErr revolt_ws_recv(
         if (ret != REVOLTE_OK || nrecv == 0)
             goto end;
 
-        ret = revolt_ws_deserialize_header(buf, nrecv, &header, &header_len);
+        ret = revoltc_ws_deserialize_header(buf, nrecv, &header, &header_len);
         if (ret == REVOLTE_INSUFFICIENT_DATA) {
             needed += 2;
         } else if (ret == REVOLTE_OK) {
@@ -704,8 +704,8 @@ end:
 }
 
 /* data_buf The buffer must be allocated by the caller. (min `REVOLT_WS_HEADER_MAXS`) */
-RevoltErr revolt_ws_serialize_header(
-    RevoltWSHeader header,
+RevoltErr revoltc_ws_serialize_header(
+    RevoltcWSHeader header,
     revolt_byte *data_buf,
     int8_t *data_len
 ) {
@@ -749,10 +749,10 @@ RevoltErr revolt_ws_serialize_header(
     return REVOLTE_OK;
 }
 
-RevoltErr revolt_ws_deserialize_header(
+RevoltErr revoltc_ws_deserialize_header(
     const revolt_byte *data,
     size_t data_len,
-    RevoltWSHeader *header,
+    RevoltcWSHeader *header,
     uint8_t *header_len
 ) {
     int8_t pos = 0;
@@ -762,7 +762,7 @@ RevoltErr revolt_ws_deserialize_header(
 
     *header_len = 0;
 
-    if (data_len < REVOLT_WS_HEADER_MINS)
+    if (data_len < REVOLTC_WS_HEADER_MINS)
         return REVOLTE_INSUFFICIENT_DATA;
 
     header->fin          = (data[pos] >> 7) & 0x01;

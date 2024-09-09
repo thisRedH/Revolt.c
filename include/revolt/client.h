@@ -1,18 +1,16 @@
 #ifndef _REVOLTC_CLIENT_H_INCLUDED_
 #define _REVOLTC_CLIENT_H_INCLUDED_
 
-#include <pthread.h>
-#include <pstdint/pstdint.h>
 #include "revolt/common.h"
-#include "revolt/http.h"
-#include "revolt/websocket.h"
+#include "revolt/rest.h"
+#include "revolt/ws.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct Revolt {
-    RevoltHTTP *http;
+    RevoltREST *rest;
     RevoltWS *ws;
 } Revolt;
 

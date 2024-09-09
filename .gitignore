@@ -25,3 +25,4 @@ Thumbs.db
 .vs
 
 compile_commands.json
+.cache
