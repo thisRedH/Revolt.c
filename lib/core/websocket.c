@@ -1,4 +1,5 @@
 #include "revolt/core/websocket.h"
+#include "revolt/core/util.h"
 #define CURL_NO_OLDIES
 #include <curl/curl.h>
 
@@ -11,77 +12,12 @@
     ((len) > REVOLTC_WS_PAYLOAD_MAXS || \
     ((len) > REVOLTC_WS_PAYLOAD_MAXS_CNTRL && CNTRL_FRAME(opc)))
 
-/* TODO move ..._bytes_be and str_... to a util file */
-static RVLTC_INLINE void u64_to_bytes_be(uint64_t v, uint8_t bytes_out[8]) {
-    int i;
-    for (i = 0; i < 8; i++)
-        bytes_out[7 - i] = (v >> (i * 8)) & 0xFF;
-}
-
-static RVLTC_INLINE void u32_to_bytes_be(uint32_t v, uint8_t bytes_out[4]) {
-    int i;
-    for (i = 0; i < 4; i++)
-        bytes_out[3 - i] = (v >> (i * 8)) & 0xFF;
-}
-
-static RVLTC_INLINE void u16_to_bytes_be(uint16_t v, uint8_t bytes_out[2]) {
-    bytes_out[0] = (v >> 8) & 0xFF;
-    bytes_out[1] = (v >> 0) & 0xFF; 
-}
-
-static RVLTC_INLINE uint64_t u64_from_bytes_be(const uint8_t bytes[8]) {
-    return
-        ((uint64_t)bytes[0]) << 56 |
-        ((uint64_t)bytes[1]) << 48 |
-        ((uint64_t)bytes[2]) << 40 |
-        ((uint64_t)bytes[3]) << 32 |
-        ((uint64_t)bytes[4]) << 24 |
-        ((uint64_t)bytes[5]) << 16 |
-        ((uint64_t)bytes[6]) << 8  |
-        ((uint64_t)bytes[7]) << 0;
-}
-
-static RVLTC_INLINE uint32_t u32_from_bytes_be(const uint8_t bytes[4]) {
-    return
-        ((uint32_t)bytes[0]) << 24 |
-        ((uint32_t)bytes[1]) << 16 |
-        ((uint32_t)bytes[2]) << 8  |
-        ((uint32_t)bytes[3]) << 0;
-}
-
-static RVLTC_INLINE uint16_t u16_from_bytes_be(const uint8_t bytes[2]) {
-    return
-        ((uint16_t)bytes[0]) << 8 |
-        ((uint16_t)bytes[1]) << 0;
-}
-
-static RVLTC_INLINE void str_tolower(char* str) {
-    for (; *str; str++) { *str = tolower(*str); }
-}
-
-static RVLTC_INLINE char *str_dup(const char *str) {
-    char *dup = malloc(strlen(str) + 1);
-    if (dup != NULL)
-        (void) strcpy(dup, str);
-
-    return dup;
-}
-
-static RVLTC_INLINE char *str_dupn(const char *str, size_t n) {
-    char *dup = malloc(n + 1);
-    if (dup != NULL) {
-        (void) strncpy(dup, str, n);
-        dup[n] = '\0';
-    }
-    return dup;
-}
-
 char *url_get_scheme(const char *url) {
     const char *p = strstr(url, "://");
     if (p == NULL)
         return NULL;
 
-    return str_dupn(url, p - url);
+    return revoltc_util_str_dupn(url, p - url);
 }
 
 char *url_get_host(const char *url) {
@@ -96,9 +32,9 @@ char *url_get_host(const char *url) {
 
     p2 = strpbrk(p1, " :/?#");
     if (p2 == NULL)
-        return str_dup(p1);
+        return revoltc_util_str_dup(p1);
 
-    return str_dupn(p1, p2 - p1);
+    return revoltc_util_str_dupn(p1, p2 - p1);
 }
 
 char *url_get_path(const char *url) {
@@ -120,16 +56,16 @@ char *url_get_path(const char *url) {
 
     p2 = strchr(p1, '#');
     if (p2 == NULL)
-        return str_dup(p1);
+        return revoltc_util_str_dup(p1);
 
-    return str_dupn(p1, p2 - p1);
+    return revoltc_util_str_dupn(p1, p2 - p1);
 }
 
 char *url_normalize_scheme(const char *url, const char *fallback) {
     char *res;
 
     if (strncmp(url, "http://", 7) == 0 || strncmp(url, "https://", 8) == 0) {
-        res = str_dup(url);
+        res = revoltc_util_str_dup(url);
     } else if (strncmp(url, "ws://", 5) == 0) {
         res = malloc(strlen(url) + 3);
         if (res != NULL) {
@@ -431,7 +367,7 @@ RevoltErr revoltc_ws_disconnect(
     if (msg_bytes == NULL)
         return REVOLTE_NOMEM;
 
-    u16_to_bytes_be((uint16_t) status, msg_bytes);
+    revoltc_util_u16_bytes_be((uint16_t) status, msg_bytes);
     if (msg_len > 0 && msg != NULL)
         (void) memcpy(msg_bytes + 2, msg, msg_len);
 
@@ -731,17 +667,17 @@ RevoltErr revoltc_ws_serialize_header(
     } else if (header.payload_len <= UINT16_MAX) {
         data_buf[pos++] |= 126;
 
-        u16_to_bytes_be(header.payload_len, data_buf + pos);
+        revoltc_util_u16_bytes_be(header.payload_len, data_buf + pos);
         pos += 2;
     } else {
         data_buf[pos++] |= 127;
 
-        u64_to_bytes_be(header.payload_len, data_buf + pos);
+        revoltc_util_u64_bytes_be(header.payload_len, data_buf + pos);
         pos += 8;
     }
 
     if (header.masked) {
-        u32_to_bytes_be(header.masking_key, data_buf + pos);
+        revoltc_util_u32_bytes_be(header.masking_key, data_buf + pos);
         pos += 4;
     }
 
@@ -791,13 +727,13 @@ RevoltErr revoltc_ws_deserialize_header(
         if ((data_len - pos) < 2)
             return REVOLTE_INSUFFICIENT_DATA;
 
-        header->payload_len = u16_from_bytes_be(data + pos);
+        header->payload_len = revoltc_util_bytes_be_u16(data + pos);
         pos += 2;
     } else if (header->payload_len == 127) {
         if ((data_len - pos) < 8)
             return REVOLTE_INSUFFICIENT_DATA;
 
-        header->payload_len = u64_from_bytes_be(data + pos);
+        header->payload_len = revoltc_util_bytes_be_u64(data + pos);
         pos += 8;
     }
 
@@ -809,7 +745,7 @@ RevoltErr revoltc_ws_deserialize_header(
         if ((data_len - pos) < 4)
             return REVOLTE_INSUFFICIENT_DATA;
 
-        header->masking_key = u32_from_bytes_be(data + pos);
+        header->masking_key = revoltc_util_bytes_be_u32(data + pos);
         pos += 4;
     } else {
         header->masking_key = 0;
