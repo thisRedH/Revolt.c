@@ -4,6 +4,11 @@
   <div>A work-in-progress C89 <a href="https://revolt.chat/">Revolt</a> API wrapper and client framework.</div>
 </div>
 
+##
+
+> [!IMPORTANT]
+> This project is highly experimental and most things dont work. Things will break!
+
 ## License
 
 This project is licensed under the [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0) License.
