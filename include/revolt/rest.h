@@ -9,6 +9,8 @@
 extern "C" {
 #endif
 
+#define REVOLT_REST_DEFAULT_URL "wss://ws.revolt.chat?version=1&format=json";
+
 typedef struct RevoltREST {
     const char *url;
     const char *token;

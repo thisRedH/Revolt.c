@@ -1,5 +1,4 @@
 #include "revolt/rest.h"
-#include <stdlib.h>
 
 RevoltREST *revolt_rest_new(
     const char *url,

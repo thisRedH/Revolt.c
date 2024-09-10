@@ -155,7 +155,7 @@ static revolt_bool http_header_valid(
     if (0 != strcmp(lines[0], "HTTP/1.1 101 Switching Protocols")) goto end;
 
     for (i = 1; i < lc; i++) {
-        str_tolower(lines[i]);
+        revoltc_util_str_tolower(lines[i]);
         if (0 == strncmp(lines[i], "upgrade", 7)) {
             if (NULL != strstr(lines[i] + 7, "websocket"))          f |= 1;
         } else if (0 == strncmp(lines[i], "connection", 10)) {
