@@ -51,7 +51,7 @@ RevoltErr revoltc_http_request(
 #define revoltc_http_put(url, useragent, headers, header_count, data)   \
     revoltc_http_request(REVOLTC_HTTP_PUT,(url),(useragent),(headers),(header_count),(data),-1)
 #define revoltc_http_delete(url, useragent, headers, header_count, data)\
-    revoltc_http_request(REVOLTC_HTTP_DELETE,(url),(useragent),(headers),(header_count),(data),0)
+    revoltc_http_request(REVOLTC_HTTP_DELETE,(url),(useragent),(headers),(header_count),(data),-1)
 
 #ifdef __cplusplus
 }
