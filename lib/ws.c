@@ -38,6 +38,7 @@ void revolt_ws_delete(RevoltWS *ws) {
     if (ws == NULL)
         return;
 
+    revoltc_ws_delete(ws->ws);
     free(ws->token);
     free(ws->tx);
     free(ws);
@@ -61,7 +62,10 @@ RevoltErr revolt_ws_connect(RevoltWS *ws) {
 
     (void) sprintf(str, fmt, ws->token);
 
-    return revoltc_ws_send_str(ws->ws, 2000L, str);
+    res = revoltc_ws_send_str(ws->ws, 2000L, str);
+
+    free(str);
+    return res;
 }
 
 void revolt_ws_disconnect(RevoltWS *ws) {

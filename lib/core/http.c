@@ -3,16 +3,36 @@
 #include <curl/curl.h>
 
 #ifndef REVLOTC_USERAGENT
-#define REVOLTC_USERAGENT "Revolt.c/0.1.0"
+#define REVOLTC_USERAGENT "Revolt.c"
 #endif
 
-typedef struct WriteCallbackUserp {
+const char *revoltc_http_method_str(enum RevoltcHTTPMethod method) {
+    switch (method) {
+        case REVOLTC_HTTP_GET:      return "GET";
+        case REVOLTC_HTTP_HEAD:     return "HEAD";
+        case REVOLTC_HTTP_POST:     return "POST";
+        case REVOLTC_HTTP_PUT:      return "PUT";
+        case REVOLTC_HTTP_DELETE:   return "DELETE";
+        case REVOLTC_HTTP_CONNECT:  return "CONNECT";
+        case REVOLTC_HTTP_OPTIONS:  return "OPTIONS";
+        case REVOLTC_HTTP_TRACE:    return "TRACE";
+        case REVOLTC_HTTP_PATCH:    return "PATCH";
+        default:                    return "GET";
+    }
+}
+
+void revoltc_http_response_cleanup(RevoltcHTTPResponse resp) {
+    free(resp.header);
+    free(resp.body);
+}
+
+struct WriteCallbackUserp {
     revolt_byte *data;
     size_t data_len;
-} WriteCallbackUserp;
+};
 
 static size_t write_callback(void *contents, size_t size, size_t nmemb, void *userp) {
-    WriteCallbackUserp *up = (WriteCallbackUserp*) userp;
+    struct WriteCallbackUserp *up = userp;
     size_t realsize = size * nmemb;
 
     if (up == NULL)
@@ -22,7 +42,7 @@ static size_t write_callback(void *contents, size_t size, size_t nmemb, void *us
     if(up->data == NULL)
         return 0;
 
-    memcpy(up->data + up->data_len, contents, realsize);
+    (void) memcpy(up->data + up->data_len, contents, realsize);
 
     up->data_len += realsize;
     up->data[up->data_len] = '\0';
@@ -30,71 +50,61 @@ static size_t write_callback(void *contents, size_t size, size_t nmemb, void *us
     return realsize;
 }
 
-static RevoltcHTTPResponse *request_perform(CURL *hnd) {
-    RevoltcHTTPResponse *response = malloc(sizeof(RevoltcHTTPResponse));
-    WriteCallbackUserp header = {0};
-    WriteCallbackUserp body = {0};
-
-    if (response == NULL)
-        return NULL;
+RevoltErr request_perform(CURL *hnd, RevoltcHTTPResponse *response) {
+    RevoltcHTTPResponse resp = {0};
+    struct WriteCallbackUserp header = {0};
+    struct WriteCallbackUserp body = {0};
+    CURLcode res;
 
     curl_easy_setopt(hnd, CURLOPT_HEADERFUNCTION, write_callback);
     curl_easy_setopt(hnd, CURLOPT_WRITEFUNCTION, write_callback);
     curl_easy_setopt(hnd, CURLOPT_HEADERDATA, &header);
     curl_easy_setopt(hnd, CURLOPT_WRITEDATA, &body);
 
-    if (curl_easy_perform(hnd) != CURLE_OK) {
-        free(response);
-        return NULL;
+    if ((res = curl_easy_perform(hnd)) != CURLE_OK)
+        return REVOLTE_CURL | res;
+
+    resp.body = body.data;
+    resp.body_len = body.data_len;
+    resp.header = header.data;
+    resp.header_len = header.data_len;
+    curl_easy_getinfo(hnd, CURLINFO_RESPONSE_CODE, &(resp.status_code));
+
+    if (response != NULL) {
+        *response = resp;
+    } else {
+        revoltc_http_response_cleanup(resp);
     }
 
-    response->body = body.data;
-    response->body_len = body.data_len;
-    response->header = header.data;
-    response->header_len = header.data_len;
-    curl_easy_getinfo(hnd, CURLINFO_RESPONSE_CODE, &(response->status_code));
-
-    return response;
+    return REVOLTE_OK;
 }
 
-const char *revoltc_http_method_str(enum RevoltcHTTPMethod method) {
-    switch (method) {
-        case REVOLT_HTTP_GET:       return "GET";
-        case REVOLT_HTTP_HEAD:      return "HEAD";
-        case REVOLT_HTTP_POST:      return "POST";
-        case REVOLT_HTTP_PUT:       return "PUT";
-        case REVOLT_HTTP_DELETE:    return "DELETE";
-        case REVOLT_HTTP_CONNECT:   return "CONNECT";
-        case REVOLT_HTTP_OPTIONS:   return "OPTIONS";
-        default:                    return "GET";
-    }
-}
-
-RevoltcHTTPResponse *revoltc_http_request(
+RevoltErr revoltc_http_request(
     enum RevoltcHTTPMethod method,
     const char *url,
     const char *useragent,
-    char **headers,
+    const char **headers,
     size_t header_count,
     const char *body,
-    size_t body_len
+    size_t body_len,
+    RevoltcHTTPResponse *response
 ) {
-    RevoltcHTTPResponse *resp;
+    size_t i;
+    RevoltErr res;
     struct curl_slist *slist = NULL;
     CURL *hnd;
-    size_t i;
 
     if (url == NULL || (headers == NULL && header_count > 0))
-        return NULL;
+        return REVOLTE_INVAL;
 
     if (useragent == NULL)
         useragent = REVOLTC_USERAGENT;
 
     hnd = curl_easy_init();
     if (hnd == NULL)
-        return NULL;
+        return REVOLTE_CURL_INIT;
 
-    for (i = 0; i <= header_count; i++)
+    for (i = 0; i < header_count; i++)
         slist = curl_slist_append(slist, headers[i]);
 
     curl_easy_setopt(hnd, CURLOPT_URL, url);
@@ -107,11 +117,9 @@ RevoltcHTTPResponse *revoltc_http_request(
         curl_easy_setopt(hnd, CURLOPT_POSTFIELDSIZE, body_len);
     }
 
-    resp = request_perform(hnd);
-    if (resp == NULL)
-        return NULL;
+    res = request_perform(hnd, response);
 
     curl_slist_free_all(slist);
     curl_easy_cleanup(hnd);
-    return resp;
+    return res;
 }

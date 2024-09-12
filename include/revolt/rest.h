@@ -3,27 +3,46 @@
 
 #include "revolt/common.h"
 #include "revolt/core/http.h"
-#include "revolt/data_models/message.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define REVOLT_REST_DEFAULT_URL "wss://ws.revolt.chat?version=1&format=json";
+#ifndef REVOLT_REST_DEFAULT_URL
+#define REVOLT_REST_DEFAULT_URL "https://api.revolt.chat"
+#endif
 
 typedef struct RevoltREST {
-    const char *url;
-    const char *token;
+    char *url;
+    char *token;
     revolt_bool bot;
 } RevoltREST;
 
 RVLTC_EXPORT RevoltREST *revolt_rest_new(const char *url, const char *token, revolt_bool bot);
 RVLTC_EXPORT void revolt_rest_delete(RevoltREST *rest);
 
-/* RevoltUser */RVLTC_EXPORT RevoltcHTTPResponse *revolt_rest_fetch_user(RevoltREST *rest, const char *user_id);
-#define revolt_rest_fetch_me(rest)          revolt_rest_fetch_user((rest), "@me")
+RevoltErr revolt_rest_request(
+    RevoltREST *rest,
+    const char *path,
+    enum RevoltcHTTPMethod method,
+    const char **headers,
+    size_t header_count,
+    const char *body,
+    RevoltcHTTPResponse *resp
+);
 
-RVLTC_UNIMPLEMENTED RVLTC_EXPORT RevoltMessage *revolt_rest_fetch_message(RevoltREST *rest, const char *message_id);
+#define revolt_rest_rget0(rest, path, resp)     revolt_rest_request((rest),(path),REVOLTC_HTTP_GET,NULL,0,NULL,(resp))
+#define revolt_rest_rdel0(rest, path, resp)     revolt_rest_request((rest),(path),REVOLTC_HTTP_DELETE,NULL,0,NULL,(resp))
+#define revolt_rest_rput0(rest, path, resp)     revolt_rest_request((rest),(path),REVOLTC_HTTP_PUT,NULL,0,NULL,(resp))
+
+#define revolt_rest_rget(rest, path, hdrs, hdr_count, body, resp)   revolt_rest_request((rest),(path),REVOLTC_HTTP_GET,(hdrs),(hdr_count),(body),(resp))
+#define revolt_rest_rdel(rest, path, hdrs, hdr_count, body, resp)   revolt_rest_request((rest),(path),REVOLTC_HTTP_DELETE,(hdrs),(hdr_count),(body),(resp))
+#define revolt_rest_rpost(rest, path, hdrs, hdr_count, body, resp)  revolt_rest_request((rest),(path),REVOLTC_HTTP_POST,(hdrs),(hdr_count),(body),(resp))
+#define revolt_rest_rput(rest, path, hdrs, hdr_count, body, resp)   revolt_rest_request((rest),(path),REVOLTC_HTTP_PUT,(hdrs),(hdr_count),(body),(resp))
+#define revolt_rest_rpatch(rest, path, hdrs, hdr_count, body, resp) revolt_rest_request((rest),(path),REVOLTC_HTTP_PATCH,(hdrs),(hdr_count),(body),(resp))
+
+RVLTC_EXPORT RevoltErr revolt_rest_fetch_user(RevoltREST *rest, const char *user_id, /*TODO RevoltUser*/RevoltcHTTPResponse *user);
+#define revolt_rest_fetch_me(rest)          revolt_rest_fetch_user((rest), NULL)
 
 #ifdef __cplusplus
 }

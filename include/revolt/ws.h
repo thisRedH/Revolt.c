@@ -9,7 +9,9 @@
 extern "C" {
 #endif
 
-#define REVOLT_WS_DEFAULT_URL "wss://ws.revolt.chat?version=1&format=json";
+#ifndef REVOLT_WS_DEFAULT_URL
+#define REVOLT_WS_DEFAULT_URL "wss://ws.revolt.chat?version=1&format=json"
+#endif
 
 typedef struct RevoltWS RevoltWS;
 

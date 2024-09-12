@@ -3,6 +3,7 @@
 #include <revolt/revolt.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <curl/curl.h>
 
 #define HERTZ       60
 #define SLEEP_FOR   (int)(1000 / HERTZ)
@@ -28,23 +29,28 @@ int main(void) {
     RevoltErr res;
     Revolt* client;
     const char *token = getenv("REVOLT_TOKEN");
-    RevoltcHTTPResponse *user = NULL;
+    RevoltcHTTPResponse user;
     pthread_t thread;
     char input[64];
 
     client = revolt_init(
         token,
         revolt_false,
-        "https://app.revolt.chat/api",
-        "wss://ws.revolt.chat?version=1&format=json"
+        REVOLT_REST_DEFAULT_URL,
+        REVOLT_WS_DEFAULT_URL
     );
     if (client == NULL) {
         fprintf(stderr, "[ERROR]: Could not initialize the client\n");
         return 1;
     }
 
-    user = revolt_rest_fetch_me(client->rest);
-    printf("\n%s\n", user->body);
+    res = revolt_rest_fetch_user(client->rest, NULL, &user);
+    if (res == REVOLTE_OK) {
+        printf("[FETCH] %u %s\n", res, user.body);
+        revoltc_http_response_cleanup(user);
+    } else {
+        fprintf(stderr, "[ERROR]: Could not fetch user err: %s\n", revolt_err_str(res));
+    }
 
     revolt_ws_set_on_str(client->ws, on_str, NULL);
     revolt_ws_send_str(client->ws, "{\"type\":\"Ping\",\"data\":6942069}");
@@ -66,5 +72,6 @@ int main(void) {
     pthread_join(thread, NULL);
 
     revolt_cleanup(client);
+    curl_global_cleanup();
     return 0;
 }

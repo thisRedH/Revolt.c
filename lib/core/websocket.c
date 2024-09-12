@@ -572,7 +572,7 @@ RevoltErr revoltc_ws_recv(
         *bytes_recv = 0;
 
     if (frame != NULL)
-        (void) memset(frame, 0, sizeof(&frame));
+        (void) memset(frame, 0, sizeof(*frame));
 
     if (ws == NULL)
         return REVOLTE_INVAL;
