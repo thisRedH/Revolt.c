@@ -1,8 +1,6 @@
-#define _DEFAULT_SOURCE
 #define RVLTC_DEFINE_SLEEP 1
 #include "revolt/client.h"
-#include "revolt/rest.h"
-#include "revolt/ws.h"
+#include "revolt/core/util.h"
 
 #define HERTZ       120
 #define SLEEP_FOR   (int)(1000/(HERTZ))

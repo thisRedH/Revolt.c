@@ -1,11 +1,11 @@
-#ifndef _REVOLTC_HTTP_H_INCLUDED_
-#define _REVOLTC_HTTP_H_INCLUDED_
+#ifndef _REVOLTC_CORE_HTTP_H_INCLUDED_
+#define _REVOLTC_CORE_HTTP_H_INCLUDED_
 
-#include "revolt/common.h"
+#include <revolt/core/defines.h>
+#include <revolt/core/types.h>
+#include <revolt/error.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+REVOLTC_BEGIN_C_DECLS
 
 enum RevoltcHTTPMethod {
     REVOLTC_HTTP_GET = 0,
@@ -53,8 +53,5 @@ RevoltErr revoltc_http_request(
 #define revoltc_http_delete(url, useragent, headers, header_count, data)\
     revoltc_http_request(REVOLTC_HTTP_DELETE,(url),(useragent),(headers),(header_count),(data),-1)
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* _REVOLTC_HTTP_H_INCLUDED_ */
+REVOLTC_END_C_DECLS
+#endif /* _REVOLTC_CORE_HTTP_H_INCLUDED_ */

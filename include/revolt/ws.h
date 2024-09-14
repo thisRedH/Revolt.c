@@ -1,13 +1,10 @@
 #ifndef _REVOLTC_WS_H_INCLUDED_
 #define _REVOLTC_WS_H_INCLUDED_
 
-#include "error.h"
-#include "revolt/common.h"
-#include "revolt/core/websocket.h"
+#include <revolt/common.h>
+#include <revolt/core/websocket.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+REVOLTC_BEGIN_C_DECLS
 
 #ifndef REVOLT_WS_DEFAULT_URL
 #define REVOLT_WS_DEFAULT_URL "wss://ws.revolt.chat?version=1&format=json"
@@ -65,17 +62,17 @@ struct RevoltWS {
     size_t tx_size;
 };
 
-RVLTC_EXPORT RevoltWS *revolt_ws_new(const char *url, const char *token);
-RVLTC_EXPORT void revolt_ws_delete(RevoltWS *ws);
+REVOLTC_API RevoltWS *revolt_ws_new(const char *url, const char *token);
+REVOLTC_API void revolt_ws_delete(RevoltWS *ws);
 
-RVLTC_EXPORT RevoltErr revolt_ws_connect(RevoltWS *ws);
-RVLTC_EXPORT void revolt_ws_disconnect(RevoltWS *ws);
+REVOLTC_API RevoltErr revolt_ws_connect(RevoltWS *ws);
+REVOLTC_API void revolt_ws_disconnect(RevoltWS *ws);
 
-RVLTC_EXPORT RevoltErr revolt_ws_send(RevoltWS *ws, enum RevoltcWSOpcodes opc, revolt_byte *data, uint64_t data_len);
+REVOLTC_API RevoltErr revolt_ws_send(RevoltWS *ws, enum RevoltcWSOpcodes opc, revolt_byte *data, uint64_t data_len);
 #define revolt_ws_send_str(ws, str)                 revolt_ws_send((ws),REVOLTC_WS_OPC_TEXT,(revolt_byte*)(str),strlen((str)))
 #define revolt_ws_send_bin(ws, data, data_len)      revolt_ws_send((ws),REVOLTC_WS_OPC_BINARY,(data),strlen((data_len)))
 
-RVLTC_EXPORT RevoltErr revolt_ws_set_on(RevoltWS *ws, enum RevoltWSEvent ev, revolt_ws_callback fn, void *userp);
+REVOLTC_API RevoltErr revolt_ws_set_on(RevoltWS *ws, enum RevoltWSEvent ev, revolt_ws_callback fn, void *userp);
 #define revolt_ws_set_on_open(ws, fn, userp)        revolt_ws_set_on((ws),REVOLT_WS_EV_RECV_OPEN,(fn),(userp))
 #define revolt_ws_set_on_close(ws, fn, userp)       revolt_ws_set_on((ws),REVOLT_WS_EV_RECV_CLOSE,(fn),(userp))
 #define revolt_ws_set_on_str(ws, fn, userp)         revolt_ws_set_on((ws),REVOLT_WS_EV_RECV_STR,(fn),(userp))
@@ -83,10 +80,7 @@ RVLTC_EXPORT RevoltErr revolt_ws_set_on(RevoltWS *ws, enum RevoltWSEvent ev, rev
 #define revolt_ws_set_on_pong(ws, fn, userp)        revolt_ws_set_on((ws),REVOLT_WS_EV_RECV_PONG,(fn),(userp))
 #define revolt_ws_set_on_ping(ws, fn, userp)        revolt_ws_set_on((ws),REVOLT_WS_EV_RECV_PING,(fn),(userp))
 
-RVLTC_EXPORT RevoltErr revolt_ws_poll(RevoltWS *ws);
+REVOLTC_API RevoltErr revolt_ws_poll(RevoltWS *ws);
 
-#ifdef __cplusplus
-}
-#endif
-
+REVOLTC_END_C_DECLS
 #endif /* _REVOLTC_WS_H_INCLUDED_ */

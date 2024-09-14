@@ -10,7 +10,6 @@ file(GLOB_RECURSE SOURCES ${CMAKE_CURRENT_LIST_DIR}/lib/*.c)
 file(GLOB_RECURSE HEADERS ${CMAKE_CURRENT_LIST_DIR}/include/*.h)
 
 include_directories(${CMAKE_CURRENT_LIST_DIR}/include)
-include_directories(${CMAKE_CURRENT_LIST_DIR}/include/revolt)
 include_directories(${CMAKE_CURRENT_LIST_DIR}/ext)
 
 set(CMAKE_C_FLAGS "-pedantic-errors -ansi -Wextra -Wall -Wuninitialized")
@@ -19,12 +18,10 @@ set(CMAKE_C_FLAGS "-pedantic-errors -ansi -Wextra -Wall -Wuninitialized")
 if(${REVOLT_BUILD_SHARED})
     set(BULD_LIB_NAME revolt)
     add_library(${BULD_LIB_NAME} SHARED ${SOURCES} ${HEADERS})
-    target_compile_definitions(${BULD_LIB_NAME} PUBLIC RVLTC_BUILD_SHARED)
     set_property(TARGET ${BULD_LIB_NAME} PROPERTY POSITION_INDEPENDENT_CODE 1)
 else()
     set(BULD_LIB_NAME revolt_static)
     add_library(${BULD_LIB_NAME} STATIC ${SOURCES} ${HEADERS})
-    target_compile_definitions(${BULD_LIB_NAME} PUBLIC RVLTC_BUILD_STATIC)
 endif()
 add_library(${PROJECT_NAME}::${BULD_LIB_NAME} ALIAS ${BULD_LIB_NAME})
 
@@ -36,7 +33,7 @@ set_target_properties(
     C_VISIBILITY_PRESET hidden
 )
 
-target_compile_definitions(${BULD_LIB_NAME} PRIVATE RVLTC_BUILD)
+target_compile_definitions(${BULD_LIB_NAME} PRIVATE REVOLTC_BUILD)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -71,6 +68,11 @@ install(
 
 install(
     DIRECTORY ext/pstdint
+    DESTINATION include
+)
+
+install(
+    DIRECTORY ext/hedley
     DESTINATION include
 )
 

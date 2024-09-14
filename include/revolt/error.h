@@ -1,9 +1,8 @@
 #ifndef _REVOLTC_ERROR_H_INCLUDED_
 #define _REVOLTC_ERROR_H_INCLUDED_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <revolt/core/defines.h>
+REVOLTC_END_C_DECLS
 
 typedef enum RevoltErr {
     REVOLTE_OK      = 0,
@@ -62,8 +61,5 @@ extern const char *const REVOLT_ERR_STR_CURL_INIT;
 
 const char* revolt_err_str(RevoltErr err);
 
-#ifdef __cplusplus
-}
-#endif
-
+REVOLTC_END_C_DECLS
 #endif /* _REVOLTC_ERROR_H_INCLUDED_ */

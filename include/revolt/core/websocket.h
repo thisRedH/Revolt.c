@@ -1,11 +1,11 @@
-#ifndef _REVOLTC_WEBSOCKET_H_INCLUDED_
-#define _REVOLTC_WEBSOCKET_H_INCLUDED_
+#ifndef _REVOLTC_CORE_WEBSOCKET_H_INCLUDED_
+#define _REVOLTC_CORE_WEBSOCKET_H_INCLUDED_
 
-#include "revolt/common.h"
+#include <revolt/core/defines.h>
+#include <revolt/core/types.h>
+#include <revolt/error.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+REVOLTC_BEGIN_C_DECLS
 
 /*
     %x0 denotes a continuation frame
@@ -137,8 +137,5 @@ RevoltErr revoltc_ws_recv(RevoltcWS *ws, long timeout_ms, RevoltcWSFrame *frame 
 RevoltErr revoltc_ws_serialize_header(RevoltcWSHeader header, revolt_byte *data_buf /*out*/, int8_t *data_len /*out*/);
 RevoltErr revoltc_ws_deserialize_header(const revolt_byte *data, size_t data_len, RevoltcWSHeader *header /*out*/, uint8_t *header_len /*out*/);
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* _REVOLTC_WEBSOCKET_H_INCLUDED_ */
+REVOLTC_END_C_DECLS
+#endif /* _REVOLTC_CORE_WEBSOCKET_H_INCLUDED_ */

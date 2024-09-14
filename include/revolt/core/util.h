@@ -1,27 +1,44 @@
-#ifndef _REVOLTC_UTIL_H_INCLUDED_
-#define _REVOLTC_UTIL_H_INCLUDED_
+#ifndef _REVOLTC_CORE_UTIL_H_INCLUDED_
+#define _REVOLTC_CORE_UTIL_H_INCLUDED_
 
-#include "revolt/common.h"
+#include <revolt/core/defines.h>
+#include <revolt/core/types.h>
 
-#ifdef __cplusplus
-extern "C" {
+/* TODO: move to time or sleep file */
+#if RVLTC_DEFINE_SLEEP == 1
+#if defined(REVOLTC_OS_UNIX)
+    #if _POSIX_C_SOURCE >= 199309L
+        #include <time.h>
+        #define revolt_sleep(ms) {              \
+            struct timespec ts;                 \
+            ts.tv_sec = (ms) / 1000;            \
+            ts.tv_nsec = ((ms) % 1000) * 1000000; \
+            nanosleep(&ts, NULL);               \
+        }
+    #else
+        #include <unistd.h>
+        #define revolt_sleep(ms)                (void)usleep((unsigned int)((ms) * 1000))
+    #endif
+#elif defined(REVOLTC_OS_WIN)
+    #include <windows.h>
+    #define revolt_sleep(ms)                    Sleep((DWORD)(ms))
+#endif
 #endif
 
-RVLTC_EXPORT void revoltc_util_u64_bytes_be(uint64_t v, uint8_t bytes_out[8]);
-RVLTC_EXPORT void revoltc_util_u32_bytes_be(uint32_t v, uint8_t bytes_out[4]);
-RVLTC_EXPORT void revoltc_util_u16_bytes_be(uint16_t v, uint8_t bytes_out[2]);
+REVOLTC_BEGIN_C_DECLS
 
-RVLTC_EXPORT uint64_t revoltc_util_bytes_be_u64(const uint8_t bytes[8]);
-RVLTC_EXPORT uint32_t revoltc_util_bytes_be_u32(const uint8_t bytes[4]);
-RVLTC_EXPORT uint16_t revoltc_util_bytes_be_u16(const uint8_t bytes[2]);
+REVOLTC_API void revoltc_util_u64_bytes_be(uint64_t v, uint8_t bytes_out[8]);
+REVOLTC_API void revoltc_util_u32_bytes_be(uint32_t v, uint8_t bytes_out[4]);
+REVOLTC_API void revoltc_util_u16_bytes_be(uint16_t v, uint8_t bytes_out[2]);
 
-RVLTC_EXPORT char *revoltc_util_str_dup(const char *str);
-RVLTC_EXPORT char *revoltc_util_str_dupn(const char *str, size_t n);
+REVOLTC_API uint64_t revoltc_util_bytes_be_u64(const uint8_t bytes[8]);
+REVOLTC_API uint32_t revoltc_util_bytes_be_u32(const uint8_t bytes[4]);
+REVOLTC_API uint16_t revoltc_util_bytes_be_u16(const uint8_t bytes[2]);
 
-RVLTC_EXPORT void revoltc_util_str_tolower(char* str);
+REVOLTC_API char *revoltc_util_str_dup(const char *str);
+REVOLTC_API char *revoltc_util_str_dupn(const char *str, size_t n);
 
-#ifdef __cplusplus
-}
-#endif
+REVOLTC_API void revoltc_util_str_tolower(char* str);
 
-#endif /* _REVOLTC_UTIL_H_INCLUDED_ */
+REVOLTC_END_C_DECLS
+#endif /* _REVOLTC_CORE_UTIL_H_INCLUDED_ */

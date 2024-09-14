@@ -126,7 +126,7 @@ RevoltErr revolt_rest_fetch_user(RevoltREST *rest, const char *user_id, RevoltcH
 
     (void) sprintf(path, "users/%s", user_id);
 
-    res = revolt_rest_rget0(rest, path, &resp);
+    res = revolt_rest_get0(rest, path, &resp);
     if (res == REVOLTE_OK) {
         *user = resp;
     } else {
