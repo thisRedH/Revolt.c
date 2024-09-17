@@ -1,5 +1,4 @@
 #include "revolt/ws.h"
-#include "revolt/core/websocket.h"
 #include "revolt/core/util.h"
 
 RevoltWS *revolt_ws_new(const char *url, const char *token) {
@@ -38,9 +37,10 @@ void revolt_ws_delete(RevoltWS *ws) {
     if (ws == NULL)
         return;
 
-    revoltc_ws_delete(ws->ws);
     free(ws->token);
     free(ws->tx);
+    revoltc_ws_delete(ws->ws);
+
     free(ws);
 }
 
@@ -140,6 +140,25 @@ RevoltErr revolt_ws_set_on(
     return REVOLTE_OK;
 }
 
+static RevoltErr on_close(RevoltWS *ws, RevoltcWSFrame rx) {
+    RevoltErr res = REVOLTE_OK;
+
+    revoltc_ws_disconnect_ok(ws->ws);
+
+    if (ws->callbacks.close.fn != NULL) {
+        res = ws->callbacks.close.fn(
+            REVOLT_WS_EV_CLOSE,
+            rx.payload,
+            rx.header.payload_len,
+            NULL,
+            ws->callbacks.close.userp
+        );
+    }
+
+    revolt_ws_disconnect(ws);
+    return res;
+}
+
 static RevoltErr on_ping(RevoltWS *ws, RevoltcWSFrame rx) {
     RevoltErr res = REVOLTE_OK;
 
@@ -232,6 +251,9 @@ RevoltErr revolt_ws_poll(RevoltWS *ws) {
     res = revoltc_ws_recv(ws->ws, 1000L, &rx, &rxn);
     if (res == REVOLTE_OK && rxn > 0) {
         switch (rx.header.opcode) {
+            case REVOLTC_WS_OPC_CLOSE:
+                on_close(ws, rx);
+                break;
             case REVOLTC_WS_OPC_PING:
                 on_ping(ws, rx);
                 break;
@@ -250,6 +272,14 @@ RevoltErr revolt_ws_poll(RevoltWS *ws) {
         }
 
         free(rx.payload);
+    } else if (res == REVOLTE_DISCONNECT || res == REVOLTE_TIMEOUT) {
+        revolt_ws_disconnect(ws);
+        return revolt_ws_connect(ws);
+    } else if (res == REVOLTE_PARSE) {
+        /*TODO: add reson to disconnect*/
+        revoltc_ws_disconnect(ws->ws, REVOLTC_WS_CLOSE_PROTOCOL_ERR, NULL, 0);
+        revolt_ws_disconnect(ws);
+        return revolt_ws_connect(ws);
     } else if (res != REVOLTE_OK) {
         return res;
     }

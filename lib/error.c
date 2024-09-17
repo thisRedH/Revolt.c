@@ -17,6 +17,7 @@ const char *const REVOLT_ERR_STR_IO                 = "Generic I/O error";
 const char *const REVOLT_ERR_STR_PERMISSION         = "Permission denied";
 const char *const REVOLT_ERR_STR_NOT_CONNECTED      = "Not connected to remote host";
 const char *const REVOLT_ERR_STR_CONNECT            = "Could not connect to remote host";
+const char *const REVOLT_ERR_STR_DISCONNECT         = "Disconnected from remote host";
 const char *const REVOLT_ERR_STR_TIMEOUT            = "Connection timed out";
 const char *const REVOLT_ERR_STR_SEND               = "Could not send data";
 const char *const REVOLT_ERR_STR_RECV               = "Could not receive data";
@@ -52,6 +53,7 @@ const char *revolt_err_str(RevoltErr err) {
         case REVOLTE_PERMISSION:        return REVOLT_ERR_STR_PERMISSION;
         case REVOLTE_NOT_CONNECTED:     return REVOLT_ERR_STR_NOT_CONNECTED;
         case REVOLTE_CONNECT:           return REVOLT_ERR_STR_CONNECT;
+        case REVOLTE_DISCONNECT:        return REVOLT_ERR_STR_DISCONNECT;
         case REVOLTE_TIMEOUT:           return REVOLT_ERR_STR_TIMEOUT;
         case REVOLTE_SEND:              return REVOLT_ERR_STR_SEND;
         case REVOLTE_RECV:              return REVOLT_ERR_STR_RECV;

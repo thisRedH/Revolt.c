@@ -1,4 +1,4 @@
-#define RVLTC_DEFINE_SLEEP 1
+#define REVOLTC_DEFINE_SLEEP 1
 #include "revolt/client.h"
 #include "revolt/core/util.h"
 
@@ -63,6 +63,7 @@ RevoltErr revolt_run(Revolt* client) {
         revolt_sleep(SLEEP_FOR);
     }
 
+    client->running = revolt_false;
     return res;
 }
 

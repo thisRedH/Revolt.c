@@ -5,7 +5,7 @@
 #include <revolt/core/types.h>
 
 /* TODO: move to time or sleep file */
-#if RVLTC_DEFINE_SLEEP == 1
+#if REVOLTC_DEFINE_SLEEP == 1
 #if defined(REVOLTC_OS_UNIX)
     #if _POSIX_C_SOURCE >= 199309L
         #include <time.h>

@@ -354,14 +354,14 @@ RevoltErr revoltc_ws_disconnect(
     revolt_byte *msg,
     size_t msg_len
 ) {
-    revolt_byte *msg_bytes;
+    revolt_byte *msg_bytes = NULL;
     RevoltErr res;
 
     if (ws == NULL)
         return REVOLTE_INVAL;
 
     if (!ws->connected)
-        return REVOLTE_OK;
+        goto end;
 
     msg_bytes = malloc(msg_len + 2);
     if (msg_bytes == NULL)
@@ -385,11 +385,11 @@ RevoltErr revoltc_ws_disconnect(
 
     /* TODO check close frame */
 
+end:
     curl_easy_cleanup(ws->hnd);
     ws->hnd = NULL;
     ws->connected = revolt_false;
 
-end:
     free(msg_bytes);
     return REVOLTE_OK;
 }
@@ -519,8 +519,13 @@ static RevoltErr ws_recv_raw(
         res = curl_easy_recv(ws->hnd, buf + (*nrecv), buf_size - (*nrecv), &n);
         (*nrecv) += (uint64_t) n;
 
-        if ((*nrecv) == 0) /* No data, dont block */
-            return REVOLTE_OK;
+        if ((*nrecv) == 0) {
+            if (res == CURLE_AGAIN) { /* No data, dont block */
+                return REVOLTE_OK;
+            } else {
+                return REVOLTE_DISCONNECT;
+            }
+        }
 
         if(res == CURLE_AGAIN) {
             if (!wait_on_socket_curl(sockfd, revolt_true, timeout_ms)) {

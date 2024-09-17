@@ -2,7 +2,7 @@
 #define _REVOLTC_ERROR_H_INCLUDED_
 
 #include <revolt/core/defines.h>
-REVOLTC_END_C_DECLS
+REVOLTC_BEGIN_C_DECLS
 
 typedef enum RevoltErr {
     REVOLTE_OK      = 0,
@@ -21,6 +21,7 @@ typedef enum RevoltErr {
     REVOLTE_PERMISSION,
     REVOLTE_NOT_CONNECTED,                      /* not connected to remote host */
     REVOLTE_CONNECT,                            /* could not connect to remote host */
+    REVOLTE_DISCONNECT,
     REVOLTE_TIMEOUT,                            /* connection timed out */
     REVOLTE_SEND,                               /* could not send data */
     REVOLTE_RECV,                               /* could not receive data */
@@ -51,6 +52,7 @@ extern const char *const REVOLT_ERR_STR_IO;
 extern const char *const REVOLT_ERR_STR_PERMISSION;
 extern const char *const REVOLT_ERR_STR_NOT_CONNECTED;
 extern const char *const REVOLT_ERR_STR_CONNECT;
+extern const char *const REVOLT_ERR_STR_DISCONNECT;
 extern const char *const REVOLT_ERR_STR_TIMEOUT;
 extern const char *const REVOLT_ERR_STR_SEND;
 extern const char *const REVOLT_ERR_STR_RECV;

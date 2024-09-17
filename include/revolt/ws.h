@@ -73,8 +73,8 @@ REVOLTC_API RevoltErr revolt_ws_send(RevoltWS *ws, enum RevoltcWSOpcodes opc, re
 #define revolt_ws_send_bin(ws, data, data_len)      revolt_ws_send((ws),REVOLTC_WS_OPC_BINARY,(data),strlen((data_len)))
 
 REVOLTC_API RevoltErr revolt_ws_set_on(RevoltWS *ws, enum RevoltWSEvent ev, revolt_ws_callback fn, void *userp);
-#define revolt_ws_set_on_open(ws, fn, userp)        revolt_ws_set_on((ws),REVOLT_WS_EV_RECV_OPEN,(fn),(userp))
-#define revolt_ws_set_on_close(ws, fn, userp)       revolt_ws_set_on((ws),REVOLT_WS_EV_RECV_CLOSE,(fn),(userp))
+#define revolt_ws_set_on_open(ws, fn, userp)        revolt_ws_set_on((ws),REVOLT_WS_EV_OPEN,(fn),(userp))
+#define revolt_ws_set_on_close(ws, fn, userp)       revolt_ws_set_on((ws),REVOLT_WS_EV_CLOSE,(fn),(userp))
 #define revolt_ws_set_on_str(ws, fn, userp)         revolt_ws_set_on((ws),REVOLT_WS_EV_RECV_STR,(fn),(userp))
 #define revolt_ws_set_on_bin(ws, fn, userp)         revolt_ws_set_on((ws),REVOLT_WS_EV_RECV_BIN,(fn),(userp))
 #define revolt_ws_set_on_pong(ws, fn, userp)        revolt_ws_set_on((ws),REVOLT_WS_EV_RECV_PONG,(fn),(userp))

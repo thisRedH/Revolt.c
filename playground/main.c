@@ -1,27 +1,48 @@
 #define _DEFAULT_SOURCE
-#define RVLTC_DEFINE_SLEEP 1
+#define REVOLTC_DEFINE_SLEEP 1
 #include <revolt/revolt.h>
+#include <revolt/core/util.h>
 #include <stdio.h>
 #include <pthread.h>
 #include <curl/curl.h>
 
-#define HERTZ       60
-#define SLEEP_FOR   (int)(1000 / HERTZ)
-
-RevoltErr on_str(
-    enum RevoltWSEvent ev,
-    revolt_byte *data,
-    size_t data_len,
-    RevoltWS *ws,
-    void *userp
-) {
-    printf("[RECV] %i %lu %s\n", ev, data_len, data);
-
+RevoltErr on_status(enum RevoltWSEvent ev, revolt_byte *data, size_t data_len, RevoltWS *ws, void *userp) {
+    switch (ev) {
+        case REVOLT_WS_EV_OPEN:
+            printf("[WS]: Opened!\n");
+            break;
+        case REVOLT_WS_EV_CLOSE:
+            printf("[WS]: Closed!\n");
+            break;
+        case REVOLT_WS_EV_RECV_PING:
+            printf("[WS]: Ping!\n");
+            break;
+        case REVOLT_WS_EV_RECV_PONG:
+            printf("[WS]: Pong!\n");
+            break;
+        default:
+            break;
+    }
     return REVOLTE_OK;
 }
 
-void* thread_fc(void *client) {
-    revolt_run(client);
+RevoltErr on_recv(enum RevoltWSEvent ev, revolt_byte *data, size_t data_len, RevoltWS *ws, void *userp) {
+    if (ev == REVOLT_WS_EV_RECV_STR) {
+        printf("[WS] RECV: %i %lu \"%s\"\n", ev, data_len, data);
+    } else if (ev == REVOLT_WS_EV_RECV_BIN) {
+        printf("[WS] RECV: binary data\n");
+    }
+    return REVOLTE_OK;
+}
+
+void* thread_fc(void *ctx) {
+    Revolt *client = ctx;
+    RevoltErr res;
+
+    res = revolt_run(client);
+    if (res != REVOLTE_OK)
+        printf("[ERROR][thread_fc]: res = %s\n", revolt_err_str(res));
+
     return NULL;
 }
 
@@ -52,7 +73,12 @@ int main(void) {
         fprintf(stderr, "[ERROR]: Could not fetch user err: %s\n", revolt_err_str(res));
     }
 
-    revolt_ws_set_on_str(client->ws, on_str, NULL);
+    revolt_ws_set_on_open(client->ws, on_status, NULL);
+    revolt_ws_set_on_close(client->ws, on_status, NULL);
+    revolt_ws_set_on_ping(client->ws, on_status, NULL);
+    revolt_ws_set_on_pong(client->ws, on_status, NULL);
+    revolt_ws_set_on_str(client->ws, on_recv, NULL);
+
     revolt_ws_send_str(client->ws, "{\"type\":\"Ping\",\"data\":6942069}");
 
     if (pthread_create(&thread, NULL, thread_fc, client) != 0) {
