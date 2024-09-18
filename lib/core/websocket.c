@@ -49,7 +49,7 @@ char *url_get_path(const char *url) {
 
     p1 = strpbrk(p1, "/?");
     if (p1 == NULL)
-        return "";
+        return calloc(1, 1);
 
     if (*p1 == '/')
         p1++;
@@ -189,27 +189,27 @@ static RevoltErr ws_handshake_send(RevoltcWS *ws) {
     revolt_byte *buf;
     uint64_t n;
 
-    path = url_get_path(ws->url);
-    if (path == NULL)
+    host = url_get_host(ws->url);
+    if (host == NULL)
         return REVOLTE_NOMEM;
 
-    host = url_get_host(ws->url);
-    if (host == NULL) {
-        free(path);
+    path = url_get_path(ws->url);
+    if (path == NULL) {
+        free(host);
         return REVOLTE_NOMEM;
     }
 
     buf = malloc(strlen(fmt) + strlen(path) + strlen(host) + 1);
     if (buf == NULL) {
-        free(path);
         free(host);
+        free(path);
         return REVOLTE_NOMEM;
     }
 
     n = sprintf((char*) buf, fmt, path, host);
 
-    free(path);
     free(host);
+    free(path);
 
     res = ws_send_raw(ws, 6000L, buf, n);
 
