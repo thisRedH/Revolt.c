@@ -27,7 +27,7 @@ void revoltc_http_response_cleanup(RevoltcHTTPResponse resp) {
 }
 
 struct WriteCallbackUserp {
-    revolt_byte *data;
+    char *data;
     size_t data_len;
 };
 

@@ -42,6 +42,9 @@ target_link_libraries(${BULD_LIB_NAME} PRIVATE Threads::Threads)
 find_package(CURL REQUIRED)
 target_link_libraries(${BULD_LIB_NAME} PUBLIC CURL::libcurl)
 
+find_package(cJSON REQUIRED)
+target_link_libraries(${BULD_LIB_NAME} PRIVATE cjson)
+
 # Config
 set(TARGETS_EXPORT_NAME ${PROJECT_NAME}Targets)
 set(CONFIG_NAME ${PROJECT_NAME}Config)

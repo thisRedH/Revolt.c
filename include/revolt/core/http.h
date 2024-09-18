@@ -23,9 +23,9 @@ const char *revoltc_http_method_str(enum RevoltcHTTPMethod method);
 
 typedef struct RevoltcHTTPResponse {
     long status_code;
-    revolt_byte *header;
+    char *header;
     size_t header_len;
-    revolt_byte *body;
+    char *body;
     size_t body_len;
 } RevoltcHTTPResponse;
 

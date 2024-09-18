@@ -109,7 +109,7 @@ RevoltErr revolt_rest_request(
     return res;
 }
 
-RevoltErr revolt_rest_fetch_user(RevoltREST *rest, const char *user_id, RevoltcHTTPResponse *user) {
+RevoltErr revolt_rest_fetch_user(RevoltREST *rest, const char *user_id, RevoltUser *user) {
     RevoltcHTTPResponse resp = {0};
     RevoltErr res;
     char *path;
@@ -127,12 +127,11 @@ RevoltErr revolt_rest_fetch_user(RevoltREST *rest, const char *user_id, RevoltcH
     (void) sprintf(path, "users/%s", user_id);
 
     res = revolt_rest_get0(rest, path, &resp);
-    if (res == REVOLTE_OK) {
-        *user = resp;
-    } else {
-        (void) memset(user, 0, sizeof(*user));
-    }
+
+    if (res == REVOLTE_OK)
+        res = revolt_user_deserialize_json(resp.body, user);
 
     free(path);
+    revoltc_http_response_cleanup(resp);
     return res;
 }
