@@ -1,6 +1,8 @@
 #include "revolt/data_models/user.h"
 #include "revolt/core/util.h"
-#include <cjson/cJSON.h>
+#include "revolt/core/json.h"
+
+extern RevoltErr revolt_file_deserialize_json_obj(const cJSON *json, RevoltFile *file);
 
 void revolt_user_cleanup(RevoltUser user) {
     free(user.id);
@@ -8,6 +10,7 @@ void revolt_user_cleanup(RevoltUser user) {
     free(user.discriminator);
     free(user.display_name);
 
+    revolt_file_cleanup(user.avatar);
     /*TODO free(user.relations);*/
 
     free(user.bot.owner_id);
@@ -22,40 +25,7 @@ void revolt_user_delete(RevoltUser *user) {
     free(user);
 }
 
-#define json_str_getn(dst, json, n) \
-    if (cJSON_IsString((json)) && ((json)->valuestring != NULL)) \
-        (dst) = revoltc_util_str_dupn((json)->valuestring,(n))
-
-#define json_str_get(dst, json)     \
-    if (cJSON_IsString((json)) && ((json)->valuestring != NULL)) \
-        (dst) = revoltc_util_str_dup((json)->valuestring)
-
-#define json_int_get(dst, json)     \
-    if (cJSON_IsNumber((json))) (dst) = ((json)->valueint)
-
-#define json_double_get(dst, json)  \
-    if (cJSON_IsNumber((json))) (dst) = ((json)->valuedouble)
-
-#define json_bool_get(dst, json)    \
-    if (cJSON_IsBool((json)) || cJSON_IsNumber((json))) \
-        (dst) = ((json)->valueint)
-
-#define json_key_str_getn(dst, json, n, key)    \
-    json_str_getn(dst, cJSON_GetObjectItem((json), (key)), n)
-
-#define json_key_str_get(dst, json, key)        \
-    json_str_get(dst, cJSON_GetObjectItem((json), (key)))
-
-#define json_key_int_get(dst, json, key)        \
-    json_int_get(dst, cJSON_GetObjectItem((json), (key)))
-
-#define json_key_double_get(dst, json, key)     \
-    json_double_get(dst, cJSON_GetObjectItem((json), (key)))
-
-#define json_key_bool_get(dst, json, key)       \
-    json_bool_get(dst, cJSON_GetObjectItem((json), (key)))
-
-static RevoltErr user_status_deserialize_json(const cJSON *json, struct RevoltUserStatus *status) {
+RevoltErr revolt_user_status_deserialize_json_obj(const cJSON *json, struct RevoltUserStatus *status) {
     char *presence;
 
     if (json == NULL || status == NULL)
@@ -63,8 +33,8 @@ static RevoltErr user_status_deserialize_json(const cJSON *json, struct RevoltUs
 
     (void) memset(status, 0, sizeof(*status));
 
-    json_key_str_getn(status->text, json, 128, "text");
-    json_key_str_get(presence, json, "presence"); else presence = NULL;
+    revoltc_json_get_strn(status->text, json, "text", 128);
+    revoltc_json_get_str(presence, json, "presence"); else presence = NULL;
 
     if (presence != NULL) {
         revoltc_util_str_tolower(presence);
@@ -85,11 +55,8 @@ static RevoltErr user_status_deserialize_json(const cJSON *json, struct RevoltUs
                 status->presence = REVOLT_USER_PRESENCE_BUSY;
                 break;
             default:
-                status->presence = REVOLT_USER_PRESENCE_UNKNOWN;
                 break;
         }
-    } else {
-        status->presence = REVOLT_USER_PRESENCE_UNKNOWN;
     }
 
     free(presence);
@@ -124,7 +91,7 @@ static enum RevoltUserRelationshipStatus user_relationship_status_from_str(char 
     return REVOLT_USER_RELATIONSHIP_UNKNOWN;
 }
 
-static RevoltErr user_deserialize_json(const cJSON *json, RevoltUser *user) {
+RevoltErr revolt_user_deserialize_json_obj(const cJSON *json, RevoltUser *user) {
     RevoltErr res;
     const cJSON *buf;
     char *str_buf;
@@ -133,36 +100,38 @@ static RevoltErr user_deserialize_json(const cJSON *json, RevoltUser *user) {
         return REVOLTE_INVAL;
 
     (void) memset(user, 0, sizeof(*user));
-    user->privileged = revolt_false;
-    user->online = revolt_false;
 
-    json_key_str_get(user->id, json, "_id");
-    json_key_str_get(user->username, json, "username");
-    json_key_str_get(user->discriminator, json, "discriminator");
-    json_key_str_get(user->display_name, json, "display_name");
+    revoltc_json_get_str(user->id, json, "_id");
+    revoltc_json_get_str(user->username, json, "username");
+    revoltc_json_get_str(user->discriminator, json, "discriminator");
+    revoltc_json_get_str(user->display_name, json, "display_name");
 
     buf = cJSON_GetObjectItem(json, "avatar");
+    res = revolt_file_deserialize_json_obj(buf, &user->avatar);
+    if (res != REVOLTE_OK)
+        return res;
+
     buf = cJSON_GetObjectItem(json, "status");
-    res = user_status_deserialize_json(buf, &user->status);
+    res = revolt_user_status_deserialize_json_obj(buf, &user->status);
     if (res != REVOLTE_OK)
         return res;
 
     buf = cJSON_GetObjectItem(json, "relations");
-    json_key_str_get(str_buf, json, "relationship"); else str_buf = NULL;
+    /*TODO: impl relations */
+
+    revoltc_json_get_str(str_buf, json, "relationship"); else str_buf = NULL;
     user->relationship = user_relationship_status_from_str(str_buf);
     free(str_buf);
 
-    json_key_int_get(user->badges, json, "badges");
-    json_key_int_get(user->flags, json, "flags");
+    revoltc_json_get_int(user->badges, json, "badges");
+    revoltc_json_get_int(user->flags, json, "flags");
 
-    json_key_bool_get(user->privileged, json, "privileged");
-    json_key_bool_get(user->online, json, "online");
+    revoltc_json_get_bool(user->privileged, json, "privileged");
+    revoltc_json_get_bool(user->online, json, "online");
 
     buf = cJSON_GetObjectItem(json, "bot");
     if (cJSON_IsObject(buf))
-        json_key_str_get(user->bot.owner_id, buf, "owner");
-
-    /*TODO: impl avatar and relations */
+        revoltc_json_get_str(user->bot.owner_id, buf, "owner");
 
     return REVOLTE_OK;
 }
@@ -178,7 +147,7 @@ RevoltErr revolt_user_deserialize_json(const char *json_str, RevoltUser *user) {
     if (json == NULL)
         return REVOLTE_PARSE;
 
-    res = user_deserialize_json(json, user);
+    res = revolt_user_deserialize_json_obj(json, user);
 
     cJSON_Delete(json);
     return res;

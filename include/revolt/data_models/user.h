@@ -2,6 +2,7 @@
 #define _REVOLTC_DATA_MODELS_USER_H_INCLUDED_
 
 #include <revolt/common.h>
+#include <revolt/data_models/file.h>
 REVOLTC_BEGIN_C_DECLS
 
 enum RevoltUserPresence {
@@ -65,7 +66,7 @@ typedef struct RevoltUser {
     char *discriminator;
     char *display_name;
 
-    /*TODO: RevoltFile avatar;*/
+    RevoltFile avatar;
     struct RevoltUserStatus status;
 
     struct RevoltUserRelationship *relations; /*TODO: use array with size attrib*/
