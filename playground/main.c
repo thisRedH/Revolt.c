@@ -50,7 +50,7 @@ int main(void) {
     RevoltErr res;
     Revolt* client;
     const char *token = getenv("REVOLT_TOKEN");
-    RevoltUser user;
+    const RevoltUser *user;
     pthread_t thread;
     char input[64];
 
@@ -65,11 +65,11 @@ int main(void) {
         return 1;
     }
 
-    res = revolt_rest_fetch_user(client->rest, NULL, &user);
+    user = revolt_fetch_self(client, &res);
     if (res != REVOLTE_OK) {
         fprintf(stderr, "[ERROR]: Could not fetch user err: %s\n", revolt_err_str(res));
     }
-    revolt_user_cleanup(user);
+    revolt_user_delete((RevoltUser*) user);
 
     revolt_ws_set_on_open(client->ws, on_status, NULL);
     revolt_ws_set_on_close(client->ws, on_status, NULL);

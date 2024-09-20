@@ -40,8 +40,5 @@ RevoltErr revolt_rest_request(
 #define revolt_rest_put(rest, path, hdrs, hdr_count, body, resp)    revolt_rest_request((rest),(path),REVOLTC_HTTP_PUT,(hdrs),(hdr_count),(body),(resp))
 #define revolt_rest_patch(rest, path, hdrs, hdr_count, body, resp)  revolt_rest_request((rest),(path),REVOLTC_HTTP_PATCH,(hdrs),(hdr_count),(body),(resp))
 
-REVOLTC_API RevoltErr revolt_rest_fetch_user(RevoltREST *rest, const char *user_id, RevoltUser *user);
-#define revolt_rest_fetch_me(rest, user)        revolt_rest_fetch_user((rest), NULL, (user))
-
 REVOLTC_END_C_DECLS
 #endif /* _REVOLTC_REST_H_INCLUDED_ */

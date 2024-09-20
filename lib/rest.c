@@ -108,30 +108,3 @@ RevoltErr revolt_rest_request(
     free(hdrs);
     return res;
 }
-
-RevoltErr revolt_rest_fetch_user(RevoltREST *rest, const char *user_id, RevoltUser *user) {
-    RevoltcHTTPResponse resp = {0};
-    RevoltErr res;
-    char *path;
-
-    if (rest == NULL || user == NULL)
-        return REVOLTE_INVAL;
-
-    if (user_id == NULL)
-        user_id = "@me";
-
-    path = malloc(strlen("users/") + strlen(user_id) + 1);
-    if (path == NULL)
-        return REVOLTE_NOMEM;
-
-    (void) sprintf(path, "users/%s", user_id);
-
-    res = revolt_rest_get0(rest, path, &resp);
-
-    if (res == REVOLTE_OK)
-        res = revolt_user_deserialize_json(resp.body, user);
-
-    free(path);
-    revoltc_http_response_cleanup(resp);
-    return res;
-}
