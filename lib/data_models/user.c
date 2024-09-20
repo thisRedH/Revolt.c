@@ -2,7 +2,7 @@
 #include "revolt/core/util.h"
 #include "revolt/core/json.h"
 
-extern RevoltErr revolt_file_deserialize_json_obj(const RevoltcJSON *json, RevoltFile *file);
+REVOLTC_API RevoltErr revolt_file_deserialize_json_obj(const RevoltcJSON *json, RevoltFile *file);
 
 void revolt_user_cleanup(RevoltUser user) {
     free(user.id);
@@ -11,6 +11,8 @@ void revolt_user_cleanup(RevoltUser user) {
     free(user.display_name);
 
     revolt_file_cleanup(user.avatar);
+    free(user.status.text);
+
     /*TODO free(user.relations);*/
 
     free(user.bot.owner_id);
@@ -25,7 +27,7 @@ void revolt_user_delete(RevoltUser *user) {
     free(user);
 }
 
-static enum RevoltUserPresence user_presence_fom_str(char *str) {
+static enum RevoltUserPresence user_presence_from_str(char *str) {
     if (str == NULL)
         return REVOLT_USER_PRESENCE_UNKNOWN;
 
@@ -102,7 +104,7 @@ RevoltErr revolt_user_deserialize_json_obj(const RevoltcJSON *json, RevoltUser *
 
     user->status.text = revoltc_json_get_strn(json, "/status/text", 128);
     str_buf = revoltc_json_get_str(json, "/status/presence");
-    user->status.presence = user_presence_fom_str(str_buf);
+    user->status.presence = user_presence_from_str(str_buf);
     free(str_buf);
 
     /*TODO: impl relations */

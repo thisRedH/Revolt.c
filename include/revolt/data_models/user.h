@@ -15,11 +15,12 @@ enum RevoltUserPresence {
 };
 
 struct RevoltUserStatus {
-    const char *text; /* max 128 chars */
+    char *text; /* max 128 chars */
     enum RevoltUserPresence presence;
 };
 
 enum RevoltUserBadges {
+    REVOLT_USER_BADGE_NONE                      = 0,
     REVOLT_USER_BADGE_DEVELOPER                 = 1,    /*Revolt Developer*/
     REVOLT_USER_BADGE_TRANSLATOR                = 2,    /*Helped translate Revolt*/
     REVOLT_USER_BADGE_SUPPORTER                 = 4,    /*Monetarily supported Revolt*/
@@ -34,6 +35,7 @@ enum RevoltUserBadges {
 };
 
 enum RevoltUserFlags {
+    REVOLT_USER_FLAG_NONE       = 0,
     REVOLT_USER_FLAG_SUSPENDED  = 1,
     REVOLT_USER_FLAG_DELETED    = 2,
     REVOLT_USER_FLAG_BANNED     = 4,
@@ -73,7 +75,7 @@ typedef struct RevoltUser {
     enum RevoltUserRelationshipStatus relationship;
 
     uint32_t badges;    /* Bitfield of `RevoltUserBadges` */
-    uint32_t flags;     /* Bitfield of `RevoltUserBadges` */
+    uint32_t flags;     /* Bitfield of `RevoltUserFlags` */
 
     revolt_bool privileged;
     revolt_bool online;

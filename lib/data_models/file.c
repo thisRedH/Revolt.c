@@ -1,5 +1,4 @@
 #include "revolt/data_models/file.h"
-#include "revolt/client.h"
 #include "revolt/core/util.h"
 #include "revolt/core/json.h"
 

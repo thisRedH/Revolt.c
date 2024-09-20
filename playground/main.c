@@ -51,6 +51,7 @@ int main(void) {
     Revolt* client;
     const char *token = getenv("REVOLT_TOKEN");
     const RevoltUser *user;
+    const RevoltChannel *channel;
     pthread_t thread;
     char input[64];
 
@@ -66,10 +67,12 @@ int main(void) {
     }
 
     user = revolt_fetch_self(client, &res);
+    channel = revolt_fetch_channel(client, "01J0BVBXCXN63JT3GMBXYW", 0);
     if (res != REVOLTE_OK) {
         fprintf(stderr, "[ERROR]: Could not fetch user err: %s\n", revolt_err_str(res));
     }
     revolt_user_delete((RevoltUser*) user);
+    revolt_channel_delete((RevoltChannel*) channel, revolt_false);
 
     revolt_ws_set_on_open(client->ws, on_status, NULL);
     revolt_ws_set_on_close(client->ws, on_status, NULL);

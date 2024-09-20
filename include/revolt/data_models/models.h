@@ -3,6 +3,7 @@
 
 #include <revolt/data_models/file.h>
 #include <revolt/data_models/user.h>
+#include <revolt/data_models/channel.h>
 #include <revolt/data_models/server.h>
 #include <revolt/data_models/emoji.h>
 #include <revolt/data_models/message.h>
