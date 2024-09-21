@@ -9,8 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <revolt/core/defines.h>
 
+#include <revolt/core/defines.h>
+#include <revolt/error.h>
 REVOLTC_BEGIN_C_DECLS
 
 typedef enum _revolt_bool {
@@ -19,6 +20,35 @@ typedef enum _revolt_bool {
 } revolt_bool;
 
 typedef unsigned char revolt_byte;
+
+struct RevoltcHashMapNode {
+    char *key;
+    void *value;
+    struct RevoltcHashMapNode *next;
+};
+
+typedef struct RevoltcHashMap {
+    struct RevoltcHashMapNode **buckets;
+    uint32_t buckets_used;
+    uint32_t bucket_count;
+    void(*free_fn)(void*);
+} RevoltcHashMap;
+
+REVOLTC_API RevoltcHashMap *revoltc_hash_map_new(uint32_t bucket_count, void(*free_fn)(void*));
+REVOLTC_API void revoltc_hash_map_delete(RevoltcHashMap *map);
+
+REVOLTC_API void *revoltc_hash_map_get(const RevoltcHashMap *map, const char* key);
+REVOLTC_API RevoltErr revoltc_hash_map_insert(RevoltcHashMap *map, const char* key, void *value);
+REVOLTC_API void *revoltc_hash_map_remove(RevoltcHashMap *map, const char* key);
+
+#define revoltc_hash_map_remove_free(map, key) {                \
+    if ((map) != NULL && (map)->free_fn != NULL)                \
+        (map)->free_fn(revoltc_hash_map_remove((map),(key)));   \
+    else                                                        \
+        (void)revoltc_hash_map_remove((map),(key));             \
+}
+
+REVOLTC_API RevoltErr revoltc_hash_map_grow(RevoltcHashMap *map, float growth_by);
 
 REVOLTC_END_C_DECLS
 #endif /* _REVOLTC_CORE_TYPES_H_INCLUDED_ */
