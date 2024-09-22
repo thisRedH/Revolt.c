@@ -21,6 +21,7 @@ typedef enum _revolt_bool {
 
 typedef unsigned char revolt_byte;
 
+
 struct RevoltcHashMapNode {
     char *key;
     void *value;
@@ -49,6 +50,29 @@ REVOLTC_API void *revoltc_hash_map_remove(RevoltcHashMap *map, const char* key);
 }
 
 REVOLTC_API RevoltErr revoltc_hash_map_grow(RevoltcHashMap *map, float growth_by);
+
+
+struct RevoltcLRUCacheNode {
+    char *key;
+    void *value;
+    struct RevoltcLRUCacheNode *prev;
+    struct RevoltcLRUCacheNode *next;
+};
+
+typedef struct RevoltcLRUCache {
+    RevoltcHashMap *map;
+    struct RevoltcLRUCacheNode *head;
+    struct RevoltcLRUCacheNode *tail;
+    uint32_t count;
+    uint32_t capacity;
+    void(*free_fn)(void*);
+} RevoltcLRUCache;
+
+REVOLTC_API RevoltcLRUCache *revoltc_lru_cache_new(uint32_t capacity, void(*free_fn)(void*));
+REVOLTC_API void revoltc_lru_cache_delete(RevoltcLRUCache *cache);
+
+REVOLTC_API void *revoltc_lru_cache_get(RevoltcLRUCache *cache, const char *key);
+REVOLTC_API RevoltErr revoltc_lru_cache_put(RevoltcLRUCache *cache, const char *key, void *value);
 
 REVOLTC_END_C_DECLS
 #endif /* _REVOLTC_CORE_TYPES_H_INCLUDED_ */
