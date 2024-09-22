@@ -72,6 +72,7 @@ typedef struct RevoltUser {
     struct RevoltUserStatus status;
 
     struct RevoltUserRelationship *relations; /*TODO: use array with size attrib*/
+    size_t relations_count;
     enum RevoltUserRelationshipStatus relationship;
 
     uint32_t badges;    /* Bitfield of `RevoltUserBadges` */

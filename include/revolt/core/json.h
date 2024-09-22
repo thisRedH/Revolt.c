@@ -13,12 +13,27 @@ REVOLTC_API RevoltErr revoltc_json_parse(const char* const str, size_t len, Revo
 REVOLTC_API void revoltc_json_delete(RevoltcJSON *json);
 
 REVOLTC_API const RevoltcJSON *revoltc_json_get_obj(const RevoltcJSON *json, const char *key);
+REVOLTC_API const RevoltcJSON *revoltc_json_get_arr(const RevoltcJSON *json, const char *key);
 REVOLTC_API char *revoltc_json_get_strn(const RevoltcJSON *json, const char *key, size_t n);
 #define revoltc_json_get_str(json, key)     revoltc_json_get_strn((json),(key),0)
 REVOLTC_API int64_t revoltc_json_get_i64(const RevoltcJSON *json, const char *key);
 REVOLTC_API int revoltc_json_get_int(const RevoltcJSON *json, const char *key);
 REVOLTC_API double revoltc_json_get_double(const RevoltcJSON *json, const char *key);
 REVOLTC_API revolt_bool revoltc_json_get_bool(const RevoltcJSON *json, const char *key);
+
+REVOLTC_API const RevoltcJSON *revoltc_json_unsafe_next(const RevoltcJSON *json);
+
+REVOLTC_API const RevoltcJSON *revoltc_json_arr_get(const RevoltcJSON *arr, size_t idx);
+REVOLTC_API size_t revoltc_json_arr_size(const RevoltcJSON *arr);
+
+#define revoltc_json_arr_foreach(arr, idx, max, val) \
+    for ((idx) = 0,                                 \
+        (max) = revoltc_json_arr_size((arr)),       \
+        (val) = revoltc_json_arr_get((arr),(idx))   \
+        ;(idx) < (max);                             \
+        (idx)++,                                    \
+        (val) = revoltc_json_unsafe_next((val))     \
+    )
 
 REVOLTC_END_C_DECLS
 #endif /* _REVOLTC_CORE_JSON_H_INCLUDED_ */

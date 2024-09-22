@@ -13,7 +13,9 @@ void revolt_user_cleanup(RevoltUser user) {
     revolt_file_cleanup(user.avatar);
     free(user.status.text);
 
-    /*TODO free(user.relations);*/
+    for (; user.relations_count > 0; user.relations_count--)
+        free(user.relations[user.relations_count - 1].user_id);
+    free(user.relations);
 
     free(user.bot.owner_id);
     (void) memset(&user, 0, sizeof(user));
@@ -85,6 +87,7 @@ static enum RevoltUserRelationshipStatus user_relationship_status_from_str(char 
 RevoltErr revolt_user_deserialize_json_obj(const RevoltcJSON *json, RevoltUser *user) {
     RevoltErr res;
     const RevoltcJSON *buf;
+    size_t max;
     char *str_buf;
 
     if (json == NULL || user == NULL)
@@ -107,7 +110,21 @@ RevoltErr revolt_user_deserialize_json_obj(const RevoltcJSON *json, RevoltUser *
     user->status.presence = user_presence_from_str(str_buf);
     free(str_buf);
 
-    /*TODO: impl relations */
+    buf = revoltc_json_get_arr(json, "relations");
+    if (buf != NULL) {
+        user->relations = malloc(
+            sizeof(*user->relations) * revoltc_json_arr_size(buf));
+
+        revoltc_json_arr_foreach(buf, user->relations_count, max, buf) {
+            user->relations[user->relations_count].user_id =
+                revoltc_json_get_str(buf, "_id");
+
+            str_buf = revoltc_json_get_str(buf, "status");
+            user->relations[user->relations_count].status =
+                user_relationship_status_from_str(str_buf);
+            free(str_buf);
+        }
+    }
 
     str_buf = revoltc_json_get_str(json, "relationship");
     user->relationship = user_relationship_status_from_str(str_buf);
