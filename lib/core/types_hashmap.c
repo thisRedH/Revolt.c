@@ -1,6 +1,17 @@
+#include "revolt/core/defines.h"
 #include "revolt/core/types.h"
 #include "revolt/core/hash.h"
 #include "revolt/core/util.h"
+
+#ifndef REVOLTC_HASH_MAP_HASH
+#define REVOLTC_HASH_MAP_HASH revoltc_hash_sdbm
+#endif
+
+#define hash_map_buckets_index(bucket_count, key) \
+    (REVOLTC_HASH_MAP_HASH((const unsigned char*)(key)) % (bucket_count))
+
+#define hash_map_index(map, key) \
+    hash_map_buckets_index((map)->bucket_count, key)
 
 RevoltcHashMap *revoltc_hash_map_new(uint32_t bucket_count, void(*free_fn)(void*)) {
     RevoltcHashMap *map;
@@ -11,7 +22,7 @@ RevoltcHashMap *revoltc_hash_map_new(uint32_t bucket_count, void(*free_fn)(void*
     if (bucket_count < 16)
         bucket_count = 16;
 
-    map = malloc(sizeof(*map));
+    map = calloc(1, sizeof(*map));
     if (map == NULL)
         return NULL;
 
@@ -21,7 +32,6 @@ RevoltcHashMap *revoltc_hash_map_new(uint32_t bucket_count, void(*free_fn)(void*
         return NULL;
     }
 
-    map->buckets_used = 0;
     map->bucket_count = (const uint32_t)bucket_count;
     map->free_fn = free_fn;
 
@@ -35,17 +45,19 @@ void revoltc_hash_map_delete(RevoltcHashMap *map) {
     if (map == NULL)
         return;
 
-    for (i = 0; i < map->bucket_count; i++) {
-        node = map->buckets[i];
+    if (map->buckets != NULL) {
+        for (i = 0; i < map->bucket_count; i++) {
+            node = map->buckets[i];
 
-        while (node != NULL) {
-            free(node->key);
-            if (map->free_fn != NULL)
-                map->free_fn(node->value);
+            while (node != NULL) {
+                free(node->key);
+                if (map->free_fn != NULL)
+                    map->free_fn(node->value);
 
-            next = node->next;
-            free(node);
-            node = next;
+                next = node->next;
+                free(node);
+                node = next;
+            }
         }
     }
 
@@ -53,21 +65,22 @@ void revoltc_hash_map_delete(RevoltcHashMap *map) {
     free(map);
 }
 
-void *revoltc_hash_map_get(const RevoltcHashMap *map, const char* key) {
+REVOLTC_INLINE struct RevoltcHashMapNode *revoltc_hash_map_get_node(
+    const RevoltcHashMap *map,
+    const char* key
+) {
     struct RevoltcHashMapNode *node;
     uint32_t i;
 
     if (map == NULL || key == NULL)
         return NULL;
 
-    i = revoltc_hash_fnv1a_32((const unsigned char*) key);
-    i = i % map->bucket_count;
-
+    i = hash_map_index(map, key);
     node = map->buckets[i];
 
     while (node != NULL) {
         if (strcmp(node->key, key) == 0)
-            return node->value;
+            return node;
 
         node = node->next;
     }
@@ -75,60 +88,94 @@ void *revoltc_hash_map_get(const RevoltcHashMap *map, const char* key) {
     return NULL;
 }
 
-RevoltErr revoltc_hash_map_insert(
-    RevoltcHashMap *map,
-    const char* key,
+void *revoltc_hash_map_get(const RevoltcHashMap *map, const char* key) {
+    struct RevoltcHashMapNode *node;
+
+    node = revoltc_hash_map_get_node(map, key);
+    if (node != NULL)
+        return node->value;
+
+    return NULL;
+}
+
+REVOLTC_INLINE RevoltErr revoltc_hash_map_buckets_insert(
+    struct RevoltcHashMapNode **buckets,
+    uint32_t bucket_count,
+    char* key,
     void *value
 ) {
     struct RevoltcHashMapNode *new;
     uint32_t i;
 
-    if (map == NULL || key == NULL || value == NULL)
+    if (buckets == NULL || key == NULL || value == NULL)
         return REVOLTE_INVAL;
 
     new = malloc(sizeof(*new));
     if (new == NULL)
         return REVOLTE_NOMEM;
 
-    if (map->buckets_used >= map->bucket_count * 0.75)
-        revoltc_hash_map_grow(map, 0.25);
+    i = hash_map_buckets_index(bucket_count, key);
 
-    i = revoltc_hash_fnv1a_32((const unsigned char*) key);
-    i = i % map->bucket_count;
-
-    if (map->buckets[i] == NULL)
-        map->buckets_used++;
-
-    new->key = revoltc_util_str_dup(key);
+    new->key = key;
     new->value = value;
-    new->next = map->buckets[i];
-    map->buckets[i] = new;
+    new->next = buckets[i];
+    buckets[i] = new;
 
     return REVOLTE_OK;
 }
 
+RevoltErr revoltc_hash_map_insert(
+    RevoltcHashMap *map,
+    const char* key,
+    void *value
+) {
+    RevoltErr res;
+
+    if (map == NULL)
+        return REVOLTE_INVAL;
+
+    if (map->count >= map->bucket_count * 0.75) {
+        if (map->bucket_count <= 1024) {
+            res = revoltc_hash_map_grow(map, 1.00);
+        } else if (map->bucket_count <= 16384) {
+            res = revoltc_hash_map_grow(map, 0.50);
+        } else {
+            res = revoltc_hash_map_grow(map, 0.25);
+        }
+
+        if (res != REVOLTE_OK)
+            return res;
+    }
+
+    map->count++;
+    return revoltc_hash_map_buckets_insert(
+        map->buckets,
+        map->bucket_count,
+        revoltc_util_str_dup(key),
+        value
+    );
+}
+
 void *revoltc_hash_map_remove(RevoltcHashMap *map, const char* key) {
     struct RevoltcHashMapNode *node, *prev = NULL;
-    void *val;
     uint32_t i;
+    void *val;
 
     if (map == NULL || key == NULL)
         return NULL;
 
-    i = revoltc_hash_fnv1a_32((const unsigned char*) key);
-    i = i % map->bucket_count;
-
+    i = hash_map_index(map, key);
     node = map->buckets[i];
 
     while (node != NULL) {
         if (strcmp(node->key, key) == 0) {
-            val = node->value;
             if (prev == NULL) {
                 map->buckets[i] = node->next;
             } else {
                 prev->next = node->next;
             }
 
+            val = node->value;
             free(node->key);
             free(node);
             return val;
@@ -143,54 +190,56 @@ void *revoltc_hash_map_remove(RevoltcHashMap *map, const char* key) {
 
 RevoltErr revoltc_hash_map_grow(RevoltcHashMap *map, float growth_by) {
     struct RevoltcHashMapNode **new_buckets;
-    uint32_t new_bucket_count;
-    struct RevoltcHashMapNode *node, *next;
-    uint32_t i, index;
+    struct RevoltcHashMapNode *node;
+    uint32_t new_bucket_count, new_count = 0;
+    RevoltErr res;
+    uint32_t i;
 
     if (map == NULL || growth_by > 10 || growth_by < 0.01)
         return REVOLTE_INVAL;
 
-    new_bucket_count = (uint32_t)(map->bucket_count * (1.0f + growth_by));
+    new_bucket_count = map->bucket_count * (1.0f + growth_by);
     new_buckets = calloc(new_bucket_count, sizeof(struct RevoltcHashMapNode*));
     if (new_buckets == NULL)
         return REVOLTE_NOMEM;
 
-    for (i = 0; i < map->bucket_count; i++) {
-        node = map->buckets[i];
+    if (map->buckets != NULL) {
+        for (i = 0; i < map->bucket_count; i++) {
+            while (map->buckets[i] != NULL) {
+                node = map->buckets[i];
+                map->buckets[i] = node->next;
 
-        while (node != NULL) {
-            next = node->next;
+                new_count++;
+                res = revoltc_hash_map_buckets_insert(
+                    new_buckets,
+                    new_bucket_count,
+                    node->key,
+                    node->value
+                );
 
-            index = revoltc_hash_fnv1a_32((const unsigned char*) node->key);
-            index = index % new_bucket_count;
-
-            node->next = new_buckets[index];
-            new_buckets[index] = node;
-            node = next;
+                free(node);
+                if (res != REVOLTE_OK)
+                    return res;
+            }
         }
     }
 
     free(map->buckets);
-
     map->buckets = new_buckets;
     map->bucket_count = new_bucket_count;
-
+    map->count = new_count;
     return REVOLTE_OK;
 }
 
 #ifdef NDEBUG
-
-static void format_node(char *buf, size_t size, struct RevoltcHashMapNode *node) {return;}
-char *revoltc_hash_map_to_str(const RevoltcHashMap *map) {return "";}
-
+char *revoltc_hash_map_str_visualize(const RevoltcHashMap *map) {return "";}
 #else /*NDEBUG*/
-
 static void format_node(char *buf, size_t size, struct RevoltcHashMapNode *node) {
     while (node) {
         snprintf(
             buf + strlen(buf),
             size - strlen(buf),
-            "{k: %s, v: %p} ",
+            "{%s = %p} ",
             node->key,
             node->value
         );
@@ -199,7 +248,7 @@ static void format_node(char *buf, size_t size, struct RevoltcHashMapNode *node)
     snprintf(buf + strlen(buf), size - strlen(buf), "\n");
 }
 
-char *revoltc_hash_map_to_str(const RevoltcHashMap *map) {
+char *revoltc_hash_map_str_visualize(const RevoltcHashMap *map) {
     size_t size = 8192;
     char *buf;
     uint32_t i;

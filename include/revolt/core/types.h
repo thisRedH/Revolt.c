@@ -29,7 +29,7 @@ struct RevoltcHashMapNode {
 
 typedef struct RevoltcHashMap {
     struct RevoltcHashMapNode **buckets;
-    uint32_t buckets_used;
+    uint32_t count;
     uint32_t bucket_count;
     void(*free_fn)(void*);
 } RevoltcHashMap;
