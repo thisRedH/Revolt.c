@@ -1,5 +1,5 @@
 #include "revolt/core/types.h"
-#include "revolt/core/hash.h"
+#include "revolt/core/common.h"
 #include "revolt/core/util.h"
 
 RevoltcLRUCache *revoltc_lru_cache_new(
@@ -130,7 +130,7 @@ REVOLTC_API RevoltErr revoltc_lru_cache_put(RevoltcLRUCache *cache, const char *
     return REVOLTE_OK;
 }
 
-#ifdef NDEBUG
+#if defined(NDEBUG) || !defined(HAVE_SNPRINTF)
 char *revoltc_lru_cache_str_visualize(const RevoltcLRUCache *cache) {return "";}
 #else /*NDEBUG*/
 char *revoltc_lru_cache_str_visualize(const RevoltcLRUCache *cache) {

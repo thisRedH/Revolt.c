@@ -1,5 +1,5 @@
-#include "revolt/core/defines.h"
 #include "revolt/core/types.h"
+#include "revolt/core/common.h"
 #include "revolt/core/hash.h"
 #include "revolt/core/util.h"
 
@@ -65,7 +65,7 @@ void revoltc_hash_map_delete(RevoltcHashMap *map) {
     free(map);
 }
 
-REVOLTC_INLINE struct RevoltcHashMapNode *revoltc_hash_map_get_node(
+static REVOLTC_INLINE struct RevoltcHashMapNode *hash_map_get_node(
     const RevoltcHashMap *map,
     const char* key
 ) {
@@ -91,14 +91,14 @@ REVOLTC_INLINE struct RevoltcHashMapNode *revoltc_hash_map_get_node(
 void *revoltc_hash_map_get(const RevoltcHashMap *map, const char* key) {
     struct RevoltcHashMapNode *node;
 
-    node = revoltc_hash_map_get_node(map, key);
+    node = hash_map_get_node(map, key);
     if (node != NULL)
         return node->value;
 
     return NULL;
 }
 
-REVOLTC_INLINE RevoltErr revoltc_hash_map_buckets_insert(
+static REVOLTC_INLINE RevoltErr hash_map_buckets_insert(
     struct RevoltcHashMapNode **buckets,
     uint32_t bucket_count,
     char* key,
@@ -148,7 +148,7 @@ RevoltErr revoltc_hash_map_insert(
     }
 
     map->count++;
-    return revoltc_hash_map_buckets_insert(
+    return hash_map_buckets_insert(
         map->buckets,
         map->bucket_count,
         revoltc_util_str_dup(key),
@@ -210,7 +210,7 @@ RevoltErr revoltc_hash_map_grow(RevoltcHashMap *map, float growth_by) {
                 map->buckets[i] = node->next;
 
                 new_count++;
-                res = revoltc_hash_map_buckets_insert(
+                res = hash_map_buckets_insert(
                     new_buckets,
                     new_bucket_count,
                     node->key,
@@ -231,7 +231,7 @@ RevoltErr revoltc_hash_map_grow(RevoltcHashMap *map, float growth_by) {
     return REVOLTE_OK;
 }
 
-#ifdef NDEBUG
+#if defined(NDEBUG) || !defined(HAVE_SNPRINTF)
 char *revoltc_hash_map_str_visualize(const RevoltcHashMap *map) {return "";}
 #else /*NDEBUG*/
 static void format_node(char *buf, size_t size, struct RevoltcHashMapNode *node) {

@@ -8,9 +8,4 @@ file(GLOB_RECURSE SOURCES main.c)
 add_executable(${PROJECT_NAME} ${SOURCES})
 
 find_package(Revolt.c REQUIRED)
-target_link_libraries(${PROJECT_NAME} Revolt.c::revolt)
-add_custom_command(
-    TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    $<TARGET_FILE:Revolt.c::revolt> $<TARGET_FILE_DIR:${PROJECT_NAME}>
-)
+target_link_libraries(${PROJECT_NAME} Revolt.c::revoltc)

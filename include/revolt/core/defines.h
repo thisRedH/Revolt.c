@@ -1,32 +1,6 @@
 #ifndef _REVOLTC_CORE_DEFINES_H_INCLUDED_
 #define _REVOLTC_CORE_DEFINES_H_INCLUDED_
 
-/* IEEE Std. 1003.1-1990 */
-#if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE == 1L
-    #undef _POSIX_C_SOURCE
-    #define _POSIX_C_SOURCE 199009L
-#endif
-
-/* IEEE Std. 1003.2-1992 */
-#if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE == 2L
-    #undef _POSIX_C_SOURCE
-    #define _POSIX_C_SOURCE 199209L
-#endif
-
-/* X/Open */
-#ifdef _XOPEN_SOURCE
-#if (_XOPEN_SOURCE - 0L >= 700L) && (!defined(_POSIX_C_SOURCE) || _POSIX_C_SOURCE - 0L < 200809L)
-    #undef _POSIX_C_SOURCE
-    #define _POSIX_C_SOURCE 200809L
-#elif (_XOPEN_SOURCE - 0L >= 600L) && (!defined(_POSIX_C_SOURCE) || _POSIX_C_SOURCE - 0L < 200112L)
-    #undef _POSIX_C_SOURCE
-    #define _POSIX_C_SOURCE 200112L
-#elif (_XOPEN_SOURCE - 0L >= 500L) && (!defined(_POSIX_C_SOURCE) || _POSIX_C_SOURCE - 0L < 199506L)
-    #undef _POSIX_C_SOURCE
-    #define _POSIX_C_SOURCE 199506L
-#endif
-#endif
-
 #include <hedley/hedley.h>
 
 #define REVOLTC_MESSAGE(msg)        HEDLEY_MESSAGE(msg)

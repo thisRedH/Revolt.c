@@ -61,7 +61,7 @@ extern const char *const REVOLT_ERR_STR_INSUFFICIENT_DATA;
 extern const char *const REVOLT_ERR_STR_DEPENDENCY;
 extern const char *const REVOLT_ERR_STR_CURL_INIT;
 
-const char* revolt_err_str(RevoltErr err);
+REVOLTC_API const char* revolt_err_str(RevoltErr err);
 
 REVOLTC_END_C_DECLS
 #endif /* _REVOLTC_ERROR_H_INCLUDED_ */
