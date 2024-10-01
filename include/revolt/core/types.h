@@ -19,6 +19,9 @@ typedef enum _revolt_bool {
     revolt_true = !revolt_false
 } revolt_bool;
 
+#define REVOLTC_BOOL_IS(num)        ((num) == 0 ? 1 : (num) == 1 ? 1 : 0)
+#define REVOLTC_BOOL_CLAMP(num)     ((revolt_bool)((num) > 0 ? 1 : 0))
+
 typedef unsigned char revolt_byte;
 
 

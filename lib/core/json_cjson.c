@@ -1,10 +1,9 @@
 #include "revolt/core/json.h"
+#include "revolt/core/types.h"
 #include "revolt/core/util.h"
 
 #if REVOLTC_WITH_CJSON
 #include <cjson/cJSON.h>
-
-/* TODO: remove memory leak when changing the child node */
 
 static const char* next_token(const char* ptr);
 static cJSON* cjson_ptr_get(cJSON* json, const char* ptr);
@@ -50,7 +49,7 @@ void revoltc_json_delete(RevoltcJSON *json) {
     free(json);
 }
 
-const RevoltcJSON *revoltc_json_child(void *val) {
+const RevoltcJSON *revoltc_json_child_new(void *val) {
     RevoltcJSON *child;
 
     if (val == NULL)
@@ -65,34 +64,35 @@ const RevoltcJSON *revoltc_json_child(void *val) {
     return child;
 }
 
+const RevoltcJSON *revoltc_json_child(const RevoltcJSON *json, void *val) {
+    if (json == NULL)
+        return NULL;
+
+    revoltc_json_delete((RevoltcJSON*) json->child);
+    REVOLTC_CCONST(RevoltcJSON*, json)->child = revoltc_json_child_new(val);
+
+    return json->child;
+}
+
 const RevoltcJSON *revoltc_json_get_obj(const RevoltcJSON *json, const char *key) {
     if (json == NULL || key == NULL)
         return NULL;
 
     if (key[0] == '/') {
-        ((RevoltcJSON*)json)->child =
-            revoltc_json_child(cjson_ptr_get(json->root, key));
+        return revoltc_json_child(json, cjson_ptr_get(json->root, key));
     } else {
-        ((RevoltcJSON*)json)->child =
-            revoltc_json_child(cJSON_GetObjectItem(json->root, key));
+        return revoltc_json_child(json, cJSON_GetObjectItem(json->root, key));
     }
-
-    return json->child;
 }
 
 const RevoltcJSON *revoltc_json_get_arr(const RevoltcJSON *json, const char *key) {
     const RevoltcJSON *child;
 
     child = revoltc_json_get_obj(json, key);
-    if (child == NULL)
+    if (child == NULL || !cJSON_IsArray(child->root))
         return NULL;
 
-    if (cJSON_IsArray(child->root))
-        return child;
-
-    revoltc_json_delete((RevoltcJSON*) json->child);
-    ((RevoltcJSON*)json)->child = NULL;
-    return NULL;
+    return child;
 }
 
 char *revoltc_json_get_strn(const RevoltcJSON *json, const char *key, size_t n) {
@@ -138,7 +138,7 @@ int64_t revoltc_json_get_i64(const RevoltcJSON *json, const char *key) {
     if (value < (double)INT64_MIN || value > (double)INT64_MAX)
         return 0;
 
-    return (int64_t)value;
+    return (int64_t) value;
 }
 
 int revoltc_json_get_int(const RevoltcJSON *json, const char *key) {
@@ -189,13 +189,32 @@ revolt_bool revoltc_json_get_bool(const RevoltcJSON *json, const char *key) {
         obj = cJSON_GetObjectItem(json->root, key);
     }
 
-    if (cJSON_IsBool(obj) || (
-        cJSON_IsNumber(obj) && (obj->valueint == 0 || obj->valueint == 1)
-    )) return obj->valuedouble;
+    if (cJSON_IsBool(obj) || cJSON_IsNumber(obj))
+        return REVOLTC_BOOL_CLAMP(obj->valuedouble);
 
     return revolt_false;
 }
 
+const RevoltcJSON *revoltc_json_arr_get(const RevoltcJSON *arr, size_t idx) {
+    if (arr == NULL || !cJSON_IsArray(arr->root))
+        return NULL;
+
+    return revoltc_json_child(arr, cJSON_GetArrayItem(arr->root, idx));
+}
+
+size_t revoltc_json_arr_size(const RevoltcJSON *arr) {
+    if (arr == NULL)
+        return 0;
+
+    return cJSON_GetArraySize(arr->root);
+}
+
+const RevoltcJSON *revoltc_json_unsafe_next(const RevoltcJSON *json) {
+    if (json == NULL)
+        return NULL;
+
+    return revoltc_json_child(json, json->root->next);
+}
 
 static const char* next_token(const char* ptr) {
     const char* next;
@@ -241,32 +260,6 @@ static cJSON* cjson_ptr_get(cJSON* json, const char* ptr) {
     }
 
     return json;
-}
-
-const RevoltcJSON *revoltc_json_arr_get(const RevoltcJSON *arr, size_t idx) {
-    if (arr == NULL || !cJSON_IsArray(arr->root))
-        return NULL;
-
-    ((RevoltcJSON*)arr)->child =
-        revoltc_json_child(cJSON_GetArrayItem(arr->root, idx));
-
-    return arr->child;
-}
-
-size_t revoltc_json_arr_size(const RevoltcJSON *arr) {
-    if (arr == NULL)
-        return 0;
-    return cJSON_GetArraySize(arr->root);
-}
-
-const RevoltcJSON *revoltc_json_unsafe_next(const RevoltcJSON *json) {
-    if (json == NULL)
-        return NULL;
-
-    ((RevoltcJSON*)json)->child =
-        revoltc_json_child(json->root->next);
-
-    return json->child;
 }
 
 #endif

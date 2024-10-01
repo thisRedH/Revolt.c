@@ -4,8 +4,6 @@
 #if REVOLTC_WITH_YYJSON
 #include <yyjson.h>
 
-/* TODO: remove memory leak when changing the child node */
-
 struct RevoltcJSON {
     yyjson_doc *doc;
     yyjson_val *root;
@@ -50,7 +48,7 @@ void revoltc_json_delete(RevoltcJSON *json) {
     free(json);
 }
 
-const RevoltcJSON *revoltc_json_child(void *val) {
+const RevoltcJSON *revoltc_json_child_new(void *val) {
     RevoltcJSON *child;
 
     if (val == NULL)
@@ -65,34 +63,35 @@ const RevoltcJSON *revoltc_json_child(void *val) {
     return child;
 }
 
+const RevoltcJSON *revoltc_json_child(const RevoltcJSON *json, void *val) {
+    if (json == NULL)
+        return NULL;
+
+    revoltc_json_delete((RevoltcJSON*) json->child);
+    REVOLTC_CCONST(RevoltcJSON*, json)->child = revoltc_json_child_new(val);
+
+    return json->child;
+}
+
 const RevoltcJSON *revoltc_json_get_obj(const RevoltcJSON *json, const char *key) {
     if (json == NULL || key == NULL)
         return NULL;
 
     if (key[0] == '/') {
-        ((RevoltcJSON*)json)->child =
-            revoltc_json_child(yyjson_ptr_get(json->root, key));
+        return revoltc_json_child(json, yyjson_ptr_get(json->root, key));
     } else {
-        ((RevoltcJSON*)json)->child =
-            revoltc_json_child(yyjson_obj_get(json->root, key));
+        return revoltc_json_child(json, yyjson_obj_get(json->root, key));
     }
-
-    return json->child;
 }
 
 const RevoltcJSON *revoltc_json_get_arr(const RevoltcJSON *json, const char *key) {
     const RevoltcJSON *child;
 
     child = revoltc_json_get_obj(json, key);
-    if (child == NULL)
+    if (child == NULL || !yyjson_is_arr(child->root))
         return NULL;
 
-    if (yyjson_is_arr(child->root))
-        return child;
-
-    revoltc_json_delete((RevoltcJSON*) json->child);
-    ((RevoltcJSON*)json)->child = NULL;
-    return NULL;
+    return child;
 }
 
 char *revoltc_json_get_strn(const RevoltcJSON *json, const char *key, size_t n) {
@@ -187,9 +186,8 @@ revolt_bool revoltc_json_get_bool(const RevoltcJSON *json, const char *key) {
     if (yyjson_is_bool(val))
         return yyjson_get_bool(val);
 
-    if (yyjson_is_num(val) && (
-        yyjson_get_num(val) == 0 || yyjson_get_num(val) == 1
-    )) return (revolt_bool)yyjson_get_num(val);
+    if (yyjson_is_num(val))
+        return REVOLTC_BOOL_CLAMP(yyjson_get_num(val));
 
     return 0;
 }
@@ -198,28 +196,21 @@ const RevoltcJSON *revoltc_json_arr_get(const RevoltcJSON *arr, size_t idx) {
     if (arr == NULL || !yyjson_is_arr(arr->root))
         return NULL;
 
-    ((RevoltcJSON*)arr)->child =
-        revoltc_json_child(yyjson_arr_get(arr->root, idx));
-
-    return arr->child;
+    return revoltc_json_child(arr, yyjson_arr_get(arr->root, idx));
 }
 
 size_t revoltc_json_arr_size(const RevoltcJSON *arr) {
     if (arr == NULL)
         return 0;
+
     return yyjson_arr_size(arr->root);
 }
 
 const RevoltcJSON *revoltc_json_unsafe_next(const RevoltcJSON *json) {
-    RevoltcJSON *child;
-
     if (json == NULL)
         return NULL;
 
-    ((RevoltcJSON*)json)->child =
-        revoltc_json_child(unsafe_yyjson_get_next(json->root));
-
-    return json->child;
+    return revoltc_json_child(json, unsafe_yyjson_get_next(json->root));
 }
 
 #endif
