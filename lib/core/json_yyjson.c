@@ -1,3 +1,4 @@
+#define REVOLTC_NANESPACELESS_DEFINES 1
 #include "revolt/core/json.h"
 #include "revolt/core/util.h"
 
@@ -68,7 +69,7 @@ const RevoltcJSON *revoltc_json_child(const RevoltcJSON *json, void *val) {
         return NULL;
 
     revoltc_json_delete((RevoltcJSON*) json->child);
-    REVOLTC_CCONST(RevoltcJSON*, json)->child = revoltc_json_child_new(val);
+    CAST_CONST(RevoltcJSON*, json)->child = revoltc_json_child_new(val);
 
     return json->child;
 }

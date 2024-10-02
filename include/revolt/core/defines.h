@@ -7,7 +7,7 @@
 #define REVOLTC_WARNING(msg)        HEDLEY_WARNING(msg)
 
 #define REVOLTC_LIKELY(expr)        HEDLEY_LIKELY(expr)
-#define REVOLTC_UNLIKELY            HEDLEY_UNLIKELY(expr)
+#define REVOLTC_UNLIKELY(expr)      HEDLEY_UNLIKELY(expr)
 #define REVOLTC_MALLOC              HEDLEY_MALLOC
 #define REVOLTC_PURE                HEDLEY_PURE
 #define REVOLTC_CONST               HEDLEY_CONST
@@ -18,9 +18,9 @@
 
 #define REVOLTC_BEGIN_C_DECLS       HEDLEY_BEGIN_C_DECLS
 #define REVOLTC_END_C_DECLS         HEDLEY_END_C_DECLS
-#define REVOLTC_CCONST(T,expr)      HEDLEY_CONST_CAST(T,expr)
-#define REVOLTC_CREINT(T,expr)      HEDLEY_REINTERPRET_CAST(T,expr)
-#define REVOLTC_CSTATIC(T,expr)     HEDLEY_STATIC_CAST(T,expr)
+#define REVOLTC_CAST_CONST(T,expr)  HEDLEY_CONST_CAST(T,expr)
+#define REVOLTC_CAST_REINT(T,expr)  HEDLEY_REINTERPRET_CAST(T,expr)
+#define REVOLTC_CAST_STATIC(T,expr) HEDLEY_STATIC_CAST(T,expr)
 
 #define REVOLTC_DEPRECATED(since)   HEDLEY_DEPRECATED(since)
 #define REVOLTC_PRIVATE             HEDLEY_PRIVATE
@@ -61,5 +61,21 @@
 #else
     REVOLTC_WARNING("Could not detect OS")
 #endif
+
+#if REVOLTC_NANESPACELESS_DEFINES
+    #define LIKELY(expr)                REVOLTC_LIKELY(expr)
+    #define UNLIKELY(expr)              REVOLTC_UNLIKELY(expr)
+    #define MALLOC                      REVOLTC_MALLOC
+    #define PURE                        REVOLTC_PURE
+    #define CONST                       REVOLTC_CONST
+    #define RESTRICT                    REVOLTC_RESTRICT
+    #define INLINE                      REVOLTC_INLINE
+    #define ALWAYS_INLINE               REVOLTC_ALWAYS_INLINE
+    #define NEVER_INLINE                REVOLTC_NEVER_INLINE
+
+    #define CAST_CONST(T,expr)          REVOLTC_CAST_CONST(T,expr)
+    #define CAST_REINT(T,expr)          REVOLTC_CAST_REINT(T,expr)
+    #define CAST_STATIC(T,expr)         REVOLTC_CAST_STATIC(T,expr)
+#endif /* REVOLTC_NANESPACELESS_DEFINES */
 
 #endif /* _REVOLTC_CORE_DEFINES_H_INCLUDED_ */
