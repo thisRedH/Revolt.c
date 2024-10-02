@@ -1,3 +1,4 @@
+#define REVOLTC_NAMESPACELESS_DEFINES 1
 #include "revolt/data_models/user.h"
 #include "revolt/core/util.h"
 #include "revolt/core/json.h"
@@ -22,7 +23,7 @@ void revolt_user_cleanup(RevoltUser user) {
 }
 
 void revolt_user_delete(RevoltUser *user) {
-    if (user == NULL)
+    if_un (NILC(user))
         return;
 
     revolt_user_cleanup(*user);
@@ -30,7 +31,7 @@ void revolt_user_delete(RevoltUser *user) {
 }
 
 static enum RevoltUserPresence user_presence_from_str(char *str) {
-    if (str == NULL)
+    if_un (NILC(str))
         return REVOLT_USER_PRESENCE_UNKNOWN;
 
     revoltc_util_str_tolower(str);
@@ -57,7 +58,7 @@ static enum RevoltUserPresence user_presence_from_str(char *str) {
 }
 
 static enum RevoltUserRelationshipStatus user_relationship_status_from_str(char *str) {
-    if (str == NULL)
+    if_un (NILC(str))
         return REVOLT_USER_RELATIONSHIP_UNKNOWN;
 
     revoltc_util_str_tolower(str);
@@ -90,7 +91,7 @@ RevoltErr revolt_user_deserialize_json_obj(const RevoltcJSON *json, RevoltUser *
     size_t max;
     char *str_buf;
 
-    if (json == NULL || user == NULL)
+    if_un (NILC(json) || NILC(user))
         return REVOLTE_INVAL;
 
     (void) memset(user, 0, sizeof(*user));
@@ -145,7 +146,7 @@ RevoltErr revolt_user_deserialize_json(const char *json_str, RevoltUser *user) {
     RevoltErr res;
     RevoltcJSON *json;
 
-    if (json_str == NULL)
+    if_un (NILC(json_str))
         return REVOLTE_INVAL;
 
     res = revoltc_json_parse(json_str, 0, &json);

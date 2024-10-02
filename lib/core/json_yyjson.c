@@ -1,4 +1,4 @@
-#define REVOLTC_NANESPACELESS_DEFINES 1
+#define REVOLTC_NAMESPACELESS_DEFINES 1
 #include "revolt/core/json.h"
 #include "revolt/core/util.h"
 
@@ -14,18 +14,18 @@ struct RevoltcJSON {
 };
 
 RevoltErr revoltc_json_parse(const char* const str, size_t len, RevoltcJSON **json) {
-    if (str == NULL || json == NULL)
+    if_un (NILC(str) || NILC(json))
         return REVOLTE_INVAL;
 
     *json = calloc(1, sizeof(**json));
-    if (*json == NULL)
+    if_un (NILC(*json))
         return REVOLTE_NOMEM;
 
-    if (len == 0)
+    if (ZEROC(len))
         len = strlen(str);
 
     (*json)->doc = yyjson_read(str, len, 0);
-    if ((*json)->doc == NULL) {
+    if (NILC((*json)->doc)) {
         revoltc_json_delete(*json);
         *json = NULL;
         return REVOLTE_PARSE;
@@ -37,7 +37,7 @@ RevoltErr revoltc_json_parse(const char* const str, size_t len, RevoltcJSON **js
 }
 
 void revoltc_json_delete(RevoltcJSON *json) {
-    if (json == NULL)
+    if_un (NILC(json))
         return;
 
     revoltc_json_delete((RevoltcJSON*) json->child);
@@ -52,11 +52,11 @@ void revoltc_json_delete(RevoltcJSON *json) {
 const RevoltcJSON *revoltc_json_child_new(void *val) {
     RevoltcJSON *child;
 
-    if (val == NULL)
+    if_un (NILC(val))
         return NULL;
 
     child = calloc(1, sizeof(*child));
-    if (child == NULL)
+    if_un (NILC(child))
         return NULL;
 
     child->root = val;
@@ -65,7 +65,7 @@ const RevoltcJSON *revoltc_json_child_new(void *val) {
 }
 
 const RevoltcJSON *revoltc_json_child(const RevoltcJSON *json, void *val) {
-    if (json == NULL)
+    if_un (NILC(json))
         return NULL;
 
     revoltc_json_delete((RevoltcJSON*) json->child);
@@ -75,7 +75,7 @@ const RevoltcJSON *revoltc_json_child(const RevoltcJSON *json, void *val) {
 }
 
 const RevoltcJSON *revoltc_json_get_obj(const RevoltcJSON *json, const char *key) {
-    if (json == NULL || key == NULL)
+    if_un (NILC(json) || NILC(key))
         return NULL;
 
     if (key[0] == '/') {
@@ -89,7 +89,7 @@ const RevoltcJSON *revoltc_json_get_arr(const RevoltcJSON *json, const char *key
     const RevoltcJSON *child;
 
     child = revoltc_json_get_obj(json, key);
-    if (child == NULL || !yyjson_is_arr(child->root))
+    if (NILC(child) || !yyjson_is_arr(child->root))
         return NULL;
 
     return child;
@@ -98,7 +98,7 @@ const RevoltcJSON *revoltc_json_get_arr(const RevoltcJSON *json, const char *key
 char *revoltc_json_get_strn(const RevoltcJSON *json, const char *key, size_t n) {
     yyjson_val *val;
 
-    if (json == NULL || key == NULL)
+    if_un (NILC(json) || NILC(key))
         return NULL;
 
     if (key[0] == '/') {
@@ -121,7 +121,7 @@ char *revoltc_json_get_strn(const RevoltcJSON *json, const char *key, size_t n) 
 int64_t revoltc_json_get_i64(const RevoltcJSON *json, const char *key) {
     yyjson_val *val;
 
-    if (json == NULL || key == NULL)
+    if_un (NILC(json) || NILC(key))
         return 0;
 
     if (key[0] == '/') {
@@ -139,7 +139,7 @@ int64_t revoltc_json_get_i64(const RevoltcJSON *json, const char *key) {
 int revoltc_json_get_int(const RevoltcJSON *json, const char *key) {
     yyjson_val *val;
 
-    if (json == NULL || key == NULL)
+    if_un (NILC(json) || NILC(key))
         return 0;
 
     if (key[0] == '/') {
@@ -157,7 +157,7 @@ int revoltc_json_get_int(const RevoltcJSON *json, const char *key) {
 double revoltc_json_get_double(const RevoltcJSON *json, const char *key) {
     yyjson_val *val;
 
-    if (json == NULL || key == NULL)
+    if_un (NILC(json) || NILC(key))
         return 0;
 
     if (key[0] == '/') {
@@ -175,7 +175,7 @@ double revoltc_json_get_double(const RevoltcJSON *json, const char *key) {
 revolt_bool revoltc_json_get_bool(const RevoltcJSON *json, const char *key) {
     yyjson_val *val;
 
-    if (json == NULL || key == NULL)
+    if_un (NILC(json) || NILC(key))
         return 0;
 
     if (key[0] == '/') {
@@ -194,21 +194,21 @@ revolt_bool revoltc_json_get_bool(const RevoltcJSON *json, const char *key) {
 }
 
 const RevoltcJSON *revoltc_json_arr_get(const RevoltcJSON *arr, size_t idx) {
-    if (arr == NULL || !yyjson_is_arr(arr->root))
+    if_un (NILC(arr) || !yyjson_is_arr(arr->root))
         return NULL;
 
     return revoltc_json_child(arr, yyjson_arr_get(arr->root, idx));
 }
 
 size_t revoltc_json_arr_size(const RevoltcJSON *arr) {
-    if (arr == NULL)
+    if_un (NILC(arr))
         return 0;
 
     return yyjson_arr_size(arr->root);
 }
 
 const RevoltcJSON *revoltc_json_unsafe_next(const RevoltcJSON *json) {
-    if (json == NULL)
+    if_un (NILC(json))
         return NULL;
 
     return revoltc_json_child(json, unsafe_yyjson_get_next(json->root));

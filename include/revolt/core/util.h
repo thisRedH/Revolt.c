@@ -25,6 +25,16 @@
 #endif
 #endif
 
+#define REVOLTC_NULL_CHECK(ptr)     ((ptr) == NULL)
+#define REVOLTC_ZERO_CHECK(num)     ((num) == 0)
+
+#if REVOLTC_NAMESPACELESS_DEFINES
+    #define NILC(ptr)               REVOLTC_NULL_CHECK(ptr)
+    #define ZEROC(num)              REVOLTC_ZERO_CHECK(num)
+    #define if_un(expr)             if (REVOLTC_UNLIKELY(expr))
+    #define if_li(expr)             if (REVOLTC_LIKELY(expr))
+#endif /* REVOLTC_NAMESPACELESS_DEFINES */
+
 REVOLTC_BEGIN_C_DECLS
 
 REVOLTC_API void revoltc_util_u64_bytes_be(uint64_t v, uint8_t bytes_out[8]);

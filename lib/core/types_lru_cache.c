@@ -1,5 +1,5 @@
+#define REVOLTC_NAMESPACELESS_DEFINES 1
 #include "revolt/core/types.h"
-#include "revolt/core/common.h"
 #include "revolt/core/util.h"
 
 RevoltcLRUCache *revoltc_lru_cache_new(
@@ -8,11 +8,11 @@ RevoltcLRUCache *revoltc_lru_cache_new(
 ) {
     RevoltcLRUCache *cache;
 
-    if (capacity < 8)
+    if_un (capacity < 8)
         capacity = 8;
 
     cache = calloc(1, sizeof(*cache));
-    if (cache == NULL)
+    if_un (NILC(cache))
         return NULL;
 
     cache->map = revoltc_hash_map_new(capacity + 1, free_fn);
@@ -24,7 +24,7 @@ RevoltcLRUCache *revoltc_lru_cache_new(
 void revoltc_lru_cache_delete(RevoltcLRUCache *cache) {
     struct RevoltcLRUCacheNode *node;
 
-    if (cache == NULL)
+    if_un (NILC(cache))
         return;
 
     while (cache->head) {
@@ -69,11 +69,11 @@ REVOLTC_INLINE void lru_cache_move_to_head(
 void *revoltc_lru_cache_get(RevoltcLRUCache *cache, const char *key) {
     struct RevoltcLRUCacheNode* node;
 
-    if (cache == NULL || key == NULL)
+    if_un (NILC(cache) || NILC(key))
         return NULL;
 
     node = revoltc_hash_map_get(cache->map, key);
-    if (node == NULL)
+    if_un (NILC(node))
         return NULL;
 
     lru_cache_move_to_head(cache, node);
@@ -85,11 +85,11 @@ REVOLTC_API RevoltErr revoltc_lru_cache_put(RevoltcLRUCache *cache, const char *
     struct RevoltcLRUCacheNode* node;
     RevoltErr res;
 
-    if (cache == NULL || key == NULL || value == NULL)
+    if_un (NILC(cache) || NILC(key) || NILC(value))
         return REVOLTE_INVAL;
 
     node = revoltc_hash_map_get(cache->map, key);
-    if (node != NULL) {
+    if (!NILC(node)) {
         node->value = value;
         lru_cache_move_to_head(cache, node);
         return REVOLTE_OK;
@@ -101,10 +101,10 @@ REVOLTC_API RevoltErr revoltc_lru_cache_put(RevoltcLRUCache *cache, const char *
     node->prev = NULL;
     node->next = cache->head;
 
-    if (cache->tail == NULL)
+    if (NILC(cache->tail))
         cache->tail = node;
 
-    if (cache->head != NULL)
+    if (!NILC(cache->head))
         cache->head->prev = node;
     cache->head = node;
 
@@ -116,7 +116,7 @@ REVOLTC_API RevoltErr revoltc_lru_cache_put(RevoltcLRUCache *cache, const char *
     if (cache->count > cache->capacity) {
         node = cache->tail;
 
-        if (cache->tail->prev)
+        if (!NILC(cache->tail->prev))
             cache->tail->prev->next = NULL;
         cache->tail = cache->tail->prev;
 
@@ -133,6 +133,8 @@ REVOLTC_API RevoltErr revoltc_lru_cache_put(RevoltcLRUCache *cache, const char *
 #if defined(NDEBUG) || !defined(HAVE_SNPRINTF)
 char *revoltc_lru_cache_str_visualize(const RevoltcLRUCache *cache) {return "";}
 #else /*NDEBUG*/
+#include "revolt/core/common.h"
+
 char *revoltc_lru_cache_str_visualize(const RevoltcLRUCache *cache) {
     const struct RevoltcLRUCacheNode *node;
     size_t size = 8192;

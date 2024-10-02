@@ -1,3 +1,4 @@
+#define REVOLTC_NAMESPACELESS_DEFINES 1
 #include "revolt/data_models/file.h"
 #include "revolt/core/util.h"
 #include "revolt/core/json.h"
@@ -28,7 +29,7 @@ void revolt_file_delete(RevoltFile *file) {
 RevoltErr revolt_file_metadata_deserialize_json_obj(const RevoltcJSON *json, struct RevoltFileMetadata *metadata) {
     char *type;
 
-    if (json == NULL || metadata == NULL)
+    if_un (NILC(json) || NILC(metadata))
         return REVOLTE_INVAL;
 
     (void) memset(metadata, 0, sizeof(*metadata));
@@ -69,7 +70,7 @@ RevoltErr revolt_file_deserialize_json_obj(const RevoltcJSON *json, RevoltFile *
     RevoltErr res;
     const RevoltcJSON *buf;
 
-    if (json == NULL || file == NULL)
+    if_un (NILC(json) || NILC(file))
         return REVOLTE_INVAL;
 
     (void) memset(file, 0, sizeof(*file));
@@ -100,7 +101,7 @@ RevoltErr revolt_file_deserialize_json(const char *json_str, RevoltFile *file) {
     RevoltErr res;
     RevoltcJSON *json;
 
-    if (json_str == NULL)
+    if_un (NILC(json_str))
         return REVOLTE_INVAL;
 
     res = revoltc_json_parse(json_str, 0, &json);

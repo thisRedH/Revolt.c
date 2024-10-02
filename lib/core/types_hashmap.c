@@ -1,5 +1,5 @@
+#define REVOLTC_NAMESPACELESS_DEFINES 1
 #include "revolt/core/types.h"
-#include "revolt/core/common.h"
 #include "revolt/core/hash.h"
 #include "revolt/core/util.h"
 
@@ -16,10 +16,10 @@
 RevoltcHashMap *revoltc_hash_map_new(uint32_t bucket_count, void(*free_fn)(void*)) {
     RevoltcHashMap *map;
 
-    if (bucket_count == 0)
+    if_un (ZEROC(bucket_count))
         bucket_count = 128;
 
-    if (bucket_count < 16)
+    if_un (bucket_count < 16)
         bucket_count = 16;
 
     map = calloc(1, sizeof(*map));
@@ -42,7 +42,7 @@ void revoltc_hash_map_delete(RevoltcHashMap *map) {
     struct RevoltcHashMapNode *node, *next;
     uint32_t i;
 
-    if (map == NULL)
+    if_un (NILC(map))
         return;
 
     if (map->buckets != NULL) {
@@ -72,7 +72,7 @@ static REVOLTC_INLINE struct RevoltcHashMapNode *hash_map_get_node(
     struct RevoltcHashMapNode *node;
     uint32_t i;
 
-    if (map == NULL || key == NULL)
+    if_un (NILC(map) || NILC(key))
         return NULL;
 
     i = hash_map_index(map, key);
@@ -107,11 +107,11 @@ static REVOLTC_INLINE RevoltErr hash_map_buckets_insert(
     struct RevoltcHashMapNode *new;
     uint32_t i;
 
-    if (buckets == NULL || key == NULL || value == NULL)
+    if_un (NILC(buckets) || NILC(key) || NILC(value))
         return REVOLTE_INVAL;
 
     new = malloc(sizeof(*new));
-    if (new == NULL)
+    if (NILC(new))
         return REVOLTE_NOMEM;
 
     i = hash_map_buckets_index(bucket_count, key);
@@ -131,7 +131,7 @@ RevoltErr revoltc_hash_map_insert(
 ) {
     RevoltErr res;
 
-    if (map == NULL)
+    if_un (NILC(map))
         return REVOLTE_INVAL;
 
     if (map->count >= map->bucket_count * 0.75) {
@@ -161,7 +161,7 @@ void *revoltc_hash_map_remove(RevoltcHashMap *map, const char* key) {
     uint32_t i;
     void *val;
 
-    if (map == NULL || key == NULL)
+    if_un (NILC(map) || NILC(key))
         return NULL;
 
     i = hash_map_index(map, key);
@@ -195,12 +195,12 @@ RevoltErr revoltc_hash_map_grow(RevoltcHashMap *map, float growth_by) {
     RevoltErr res;
     uint32_t i;
 
-    if (map == NULL || growth_by > 10 || growth_by < 0.01)
+    if_un (NILC(map) || growth_by > 10 || growth_by < 0.01)
         return REVOLTE_INVAL;
 
     new_bucket_count = map->bucket_count * (1.0f + growth_by);
     new_buckets = calloc(new_bucket_count, sizeof(struct RevoltcHashMapNode*));
-    if (new_buckets == NULL)
+    if_un (NILC(new_buckets))
         return REVOLTE_NOMEM;
 
     if (map->buckets != NULL) {
@@ -234,6 +234,8 @@ RevoltErr revoltc_hash_map_grow(RevoltcHashMap *map, float growth_by) {
 #if defined(NDEBUG) || !defined(HAVE_SNPRINTF)
 char *revoltc_hash_map_str_visualize(const RevoltcHashMap *map) {return "";}
 #else /*NDEBUG*/
+#include "revolt/core/common.h"
+
 static void format_node(char *buf, size_t size, struct RevoltcHashMapNode *node) {
     while (node) {
         snprintf(

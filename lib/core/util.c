@@ -1,3 +1,4 @@
+#define REVOLTC_NAMESPACELESS_DEFINES 1
 #include "revolt/core/util.h"
 
 void revoltc_util_u64_bytes_be(uint64_t v, uint8_t bytes_out[8]) {
@@ -49,7 +50,7 @@ void str_tolower(char* str) {
 
 char *revoltc_util_str_dup(const char *str) {
     char *dup = malloc(strlen(str) + 1);
-    if (dup != NULL)
+    if_un (!NILC(dup))
         (void) strcpy(dup, str);
 
     return dup;
@@ -57,7 +58,7 @@ char *revoltc_util_str_dup(const char *str) {
 
 char *revoltc_util_str_dupn(const char *str, size_t n) {
     char *dup = malloc(n + 1);
-    if (dup != NULL) {
+    if_un (!NILC(dup)) {
         (void) strncpy(dup, str, n);
         dup[n] = '\0';
     }

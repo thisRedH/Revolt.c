@@ -1,3 +1,4 @@
+#define REVOLTC_NAMESPACELESS_DEFINES 1
 #include "revolt/core/websocket.h"
 #include "revolt/core/util.h"
 #define CURL_NO_OLDIES
@@ -14,7 +15,7 @@
 
 char *url_get_scheme(const char *url) {
     const char *p = strstr(url, "://");
-    if (p == NULL)
+    if_un (NILC(p))
         return NULL;
 
     return revoltc_util_str_dupn(url, p - url);
@@ -25,13 +26,13 @@ char *url_get_host(const char *url) {
     const char *p2;
 
     p1 = strstr(url, "://");
-    if (p1 == NULL)
+    if (NILC(p1))
         return NULL;
 
     p1 += 3;
 
     p2 = strpbrk(p1, " :/?#");
-    if (p2 == NULL)
+    if (NILC(p2))
         return revoltc_util_str_dup(p1);
 
     return revoltc_util_str_dupn(p1, p2 - p1);
@@ -42,20 +43,20 @@ char *url_get_path(const char *url) {
     const char *p2;
 
     p1 = strstr(url, "://");
-    if (p1 == NULL)
+    if (NILC(p1))
         return NULL;
 
     p1 += 3;
 
     p1 = strpbrk(p1, "/?");
-    if (p1 == NULL)
+    if (NILC(p1))
         return calloc(1, 1);
 
     if (*p1 == '/')
         p1++;
 
     p2 = strchr(p1, '#');
-    if (p2 == NULL)
+    if (NILC(p2))
         return revoltc_util_str_dup(p1);
 
     return revoltc_util_str_dupn(p1, p2 - p1);
@@ -68,26 +69,26 @@ char *url_normalize_scheme(const char *url, const char *fallback) {
         res = revoltc_util_str_dup(url);
     } else if (strncmp(url, "ws://", 5) == 0) {
         res = malloc(strlen(url) + 3);
-        if (res != NULL) {
+        if (!NILC(res)) {
             strcpy(res, "http://");
             strcat(res, url + 5);
         }
     } else if (strncmp(url, "wss://", 6) == 0) {
         res = malloc(strlen(url) + 3);
-        if (res != NULL) {
+        if (!NILC(res)) {
             strcpy(res, "https://");
             strcat(res, url + 6);
         }
     } else {
         if (strncmp(url, "://", 3) == 0) {
             res = malloc(strlen(url) + strlen(fallback) - 2);
-            if (res) {
+            if (!NILC(res)) {
                 strcpy(res, fallback);
                 strcat(res, url + 3);
             }
         } else {
             res = malloc(strlen(url) + strlen(fallback) + 1);
-            if (res) {
+            if (!NILC(res)) {
                 strcpy(res, fallback);
                 strcat(res, url);
             }
@@ -190,17 +191,17 @@ static RevoltErr ws_handshake_send(RevoltcWS *ws) {
     uint64_t n;
 
     host = url_get_host(ws->url);
-    if (host == NULL)
+    if_un (NILC(host))
         return REVOLTE_NOMEM;
 
     path = url_get_path(ws->url);
-    if (path == NULL) {
+    if_un (NILC(path)) {
         free(host);
         return REVOLTE_NOMEM;
     }
 
     buf = malloc(strlen(fmt) + strlen(path) + strlen(host) + 1);
-    if (buf == NULL) {
+    if_un (NILC(buf)) {
         free(host);
         free(path);
         return REVOLTE_NOMEM;
@@ -227,20 +228,20 @@ static RevoltErr ws_handshake_recv(RevoltcWS *ws) {
     uint64_t n, nrecv = 0;
 
     buf = malloc(buf_size);
-    if (NULL == buf)
+    if_un (NILC(buf))
         return REVOLTE_NOMEM;
 
     for (;;) {
         if (buf_size < needed) {
             buf_size = needed + 1;
             buf = realloc(buf, buf_size);
-            if (buf == NULL)
+            if_un (NILC(buf))
                 return REVOLTE_NOMEM;
         }
 
         res = ws_recv_raw(ws, 6000L, buf + nrecv, needed - nrecv, &n);
         nrecv += n;
-        if (res != REVOLTE_OK) {
+        if_un (res != REVOLTE_OK) {
             free(buf);
             return res;
         }
@@ -262,7 +263,7 @@ static RevoltErr ws_handshake_recv(RevoltcWS *ws) {
     };
 
     buf[nrecv] = '\0';
-    if(!http_header_valid((char*) buf, response_sec_key))
+    if (!http_header_valid((char*) buf, response_sec_key))
         res = REVOLTE_PARSE;
 
     free(buf);
@@ -271,7 +272,7 @@ static RevoltErr ws_handshake_recv(RevoltcWS *ws) {
 
 static RevoltErr ws_handshake(RevoltcWS *ws) {
     RevoltErr res = ws_handshake_send(ws);
-    if (res != REVOLTE_OK)
+    if_un (res != REVOLTE_OK)
         return res;
     return ws_handshake_recv(ws);
 }
@@ -294,17 +295,17 @@ RevoltcWSFrame revoltc_ws_frame__new(
 RevoltcWS *revoltc_ws_new(const char *url) {
     RevoltcWS *ws;
 
-    if (url == NULL)
+    if_un (NILC(url))
         return NULL;
 
     ws = malloc(sizeof(RevoltcWS));
-    if (ws == NULL)
+    if_un (NILC(ws))
         return NULL;
 
     ws->hnd = NULL;
     ws->connected = revolt_false;
     ws->url = url_normalize_scheme(url, "https://");
-    if (ws->url == NULL) {
+    if_un (NILC(ws->url)) {
         free(ws);
         return NULL;
     }
@@ -322,14 +323,14 @@ RevoltErr revoltc_ws_connect(RevoltcWS *ws) {
     CURLcode res;
     RevoltErr err;
 
-    if (ws == NULL)
+    if_un (NILC(ws))
         return REVOLTE_INVAL;
 
     if (ws->connected)
         return REVOLTE_OK;
 
     ws->hnd = curl_easy_init();
-    if (ws->hnd == NULL)
+    if (NILC(ws->hnd))
         return REVOLTE_CURL_INIT;
 
     curl_easy_setopt(ws->hnd, CURLOPT_URL, ws->url);
@@ -337,7 +338,7 @@ RevoltErr revoltc_ws_connect(RevoltcWS *ws) {
     curl_easy_setopt(ws->hnd, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
 
     res = curl_easy_perform(ws->hnd);
-    if(res != CURLE_OK)
+    if (res != CURLE_OK)
         return REVOLTE_CURL | res;
 
     err = ws_handshake(ws);
@@ -357,18 +358,18 @@ RevoltErr revoltc_ws_disconnect(
     revolt_byte *msg_bytes = NULL;
     RevoltErr res;
 
-    if (ws == NULL)
+    if_un (NILC(ws))
         return REVOLTE_INVAL;
 
     if (!ws->connected)
         goto end;
 
     msg_bytes = malloc(msg_len + 2);
-    if (msg_bytes == NULL)
+    if_un (NILC(msg_bytes))
         return REVOLTE_NOMEM;
 
     revoltc_util_u16_bytes_be((uint16_t) status, msg_bytes);
-    if (msg_len > 0 && msg != NULL)
+    if (msg_len > 0 && !NILC(msg))
         (void) memcpy(msg_bytes + 2, msg, msg_len);
 
     res = revoltc_ws_send(ws, 3000L, revoltc_ws_frame__new(
@@ -442,7 +443,7 @@ RevoltErr revoltc_ws_send_raw(
     revolt_byte *data,
     uint64_t data_len
 ) {
-    if (ws == NULL || data == NULL)
+    if_un (NILC(ws) || NILC(data))
         return REVOLTE_INVAL;
 
     if (!ws->connected)
@@ -456,14 +457,14 @@ RevoltErr revoltc_ws_send(RevoltcWS *ws, long timeout_ms, RevoltcWSFrame frame) 
     revolt_byte *buf;
     int8_t header_len;
 
-    if (ws == NULL)
+    if_un (NILC(ws))
         return REVOLTE_INVAL;
 
     if (!ws->connected)
         return REVOLTE_NOT_CONNECTED;
 
     buf = malloc(REVOLTC_WS_HEADER_MAXS + frame.header.payload_len);
-    if (buf == NULL)
+    if_un (NILC(buf))
         return REVOLTE_NOMEM;
 
     res = revoltc_ws_serialize_header(frame.header, buf, &header_len);
@@ -547,7 +548,7 @@ RevoltErr revoltc_ws_recv_raw(
     uint64_t buf_size,
     uint64_t *nrecv
 ) {
-    if (ws == NULL || nrecv == NULL || buf == NULL || buf_size == 0)
+    if_un (NILC(ws) || NILC(nrecv) || NILC(buf) || ZEROC(buf_size))
         return REVOLTE_INVAL;
 
     if (!ws->connected)
@@ -573,27 +574,27 @@ RevoltErr revoltc_ws_recv(
     uint8_t header_len;
     size_t n;
 
-    if (bytes_recv != NULL)
+    if (!NILC(bytes_recv))
         *bytes_recv = 0;
 
-    if (frame != NULL)
+    if (!NILC(frame))
         (void) memset(frame, 0, sizeof(*frame));
 
-    if (ws == NULL)
+    if_un (NILC(ws))
         return REVOLTE_INVAL;
 
     if (!ws->connected)
         return REVOLTE_NOT_CONNECTED;
 
     buf = malloc(buf_size);
-    if (buf == NULL)
+    if_un (NILC(buf))
         return REVOLTE_NOMEM;
 
     for (;;) {
         if (buf_size < needed) {
             buf_size = needed;
             buf = realloc(buf, buf_size);
-            if (buf == NULL)
+            if_un (NILC(buf))
                 return REVOLTE_NOMEM;
         }
 
@@ -637,7 +638,7 @@ RevoltErr revoltc_ws_recv(
     ret = REVOLTE_OK;
 
 end:
-    if (bytes_recv != NULL)
+    if (!NILC(bytes_recv))
         *bytes_recv = nrecv;
 
     free(buf);
@@ -652,10 +653,10 @@ RevoltErr revoltc_ws_serialize_header(
 ) {
     int8_t pos = 0;
 
-    if (data_buf == NULL || data_len == NULL)
+    if_un (NILC(data_buf) || NILC(data_len))
         return REVOLTE_INVAL;
 
-    if (ILLEGAL_PAYLOAD_LEN(header.opcode, header.payload_len))
+    if_un (ILLEGAL_PAYLOAD_LEN(header.opcode, header.payload_len))
         return REVOLTE_PARSE;
 
     data_buf[pos++] =
@@ -698,7 +699,7 @@ RevoltErr revoltc_ws_deserialize_header(
 ) {
     int8_t pos = 0;
 
-    if (data == NULL || header == NULL || header_len == NULL)
+    if_un (NILC(data) || NILC(header) || NILC(header_len))
         return REVOLTE_INVAL;
 
     *header_len = 0;

@@ -1,4 +1,6 @@
+#define REVOLTC_NAMESPACELESS_DEFINES 1
 #include "revolt/data_models/channel.h"
+#include "revolt/core/util.h"
 #include "revolt/core/json.h"
 #include "revolt/error.h"
 
@@ -75,7 +77,7 @@ void revolt_channel_delete(
     RevoltChannel *channel,
     revolt_bool clean_substructs
 ) {
-    if (channel == NULL)
+    if_un (NILC(channel))
         return;
 
     revolt_channel_cleanup(*channel, clean_substructs);
@@ -83,7 +85,7 @@ void revolt_channel_delete(
 }
 
 static enum RevoltChannelType channel_type_from_str(const char *str) {
-    if (str == NULL)
+    if_un (NILC(str))
         return REVOLT_CHANNEL_TYPE_UNKNOWN;
 
     switch (tolower(str[0])) {
@@ -107,7 +109,7 @@ RevoltErr revolt_channel_sm_deserialize_json_obj(
     const RevoltcJSON *json,
     struct RevoltChannelSavedMessages *ch
 ) {
-    if (json == NULL || ch == NULL)
+    if_un (NILC(json) || NILC(ch))
         return REVOLTE_INVAL;
 
     (void) memset(ch, 0, sizeof(*ch));
@@ -122,7 +124,7 @@ RevoltErr revolt_channel_dm_deserialize_json_obj(
     const RevoltcJSON *json,
     struct RevoltChannelDirectMessage *ch
 ) {
-    if (json == NULL || ch == NULL)
+    if_un (NILC(json) || NILC(ch))
         return REVOLTE_INVAL;
 
     (void) memset(ch, 0, sizeof(*ch));
@@ -143,7 +145,7 @@ RevoltErr revolt_channel_group_deserialize_json_obj(
     const RevoltcJSON *buf;
     RevoltErr res;
 
-    if (json == NULL || ch == NULL)
+    if_un (NILC(json) || NILC(ch))
         return REVOLTE_INVAL;
 
     (void) memset(ch, 0, sizeof(*ch));
@@ -173,7 +175,7 @@ RevoltErr revolt_channel_text_deserialize_json_obj(
     const RevoltcJSON *buf;
     RevoltErr res;
 
-    if (json == NULL || ch == NULL)
+    if_un (NILC(json) || NILC(ch))
         return REVOLTE_INVAL;
 
     (void) memset(ch, 0, sizeof(*ch));
@@ -204,7 +206,7 @@ RevoltErr revolt_channel_voice_deserialize_json_obj(
     const RevoltcJSON *buf;
     RevoltErr res;
 
-    if (json == NULL || ch == NULL)
+    if_un (NILC(json) || NILC(ch))
         return REVOLTE_INVAL;
 
     (void) memset(ch, 0, sizeof(*ch));
@@ -234,7 +236,7 @@ RevoltErr revolt_channel_deserialize_json_obj(
 ) {
     char *str_buf;
 
-    if (json == NULL || channel == NULL)
+    if_un (NILC(json) || NILC(channel))
         return REVOLTE_INVAL;
 
     (void) memset(channel, 0, sizeof(*channel));
@@ -281,7 +283,7 @@ RevoltErr revolt_channel_deserialize_json(
     RevoltErr res;
     RevoltcJSON *json;
 
-    if (json_str == NULL)
+    if_un (NILC(json_str))
         return REVOLTE_INVAL;
 
     res = revoltc_json_parse(json_str, 0, &json);

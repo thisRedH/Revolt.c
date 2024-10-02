@@ -62,7 +62,7 @@
     REVOLTC_WARNING("Could not detect OS")
 #endif
 
-#if REVOLTC_NANESPACELESS_DEFINES
+#if REVOLTC_NAMESPACELESS_DEFINES
     #define LIKELY(expr)                REVOLTC_LIKELY(expr)
     #define UNLIKELY(expr)              REVOLTC_UNLIKELY(expr)
     #define MALLOC                      REVOLTC_MALLOC
@@ -76,6 +76,6 @@
     #define CAST_CONST(T,expr)          REVOLTC_CAST_CONST(T,expr)
     #define CAST_REINT(T,expr)          REVOLTC_CAST_REINT(T,expr)
     #define CAST_STATIC(T,expr)         REVOLTC_CAST_STATIC(T,expr)
-#endif /* REVOLTC_NANESPACELESS_DEFINES */
+#endif /* REVOLTC_NAMESPACELESS_DEFINES */
 
 #endif /* _REVOLTC_CORE_DEFINES_H_INCLUDED_ */
